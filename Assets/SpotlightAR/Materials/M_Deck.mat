@@ -25,9 +25,9 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Ambient: 0.35
+    - _Ambient: 0.28
     - _RimPower: 4
-    - _GlowResponse: 1
+    - _GlowResponse: 0.45
     m_Colors:
     - _BaseColor: {r: 0.24, g: 0.18, b: 0.42, a: 1}
     - _RimColor: {r: 1, g: 0.36, b: 0.78, a: 1}

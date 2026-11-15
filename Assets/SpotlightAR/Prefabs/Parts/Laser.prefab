@@ -121,11 +121,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorA: {r: 1, g: 0.36, b: 0.78, a: 1}
   colorB: {r: 0.4, g: 0.85, b: 1, a: 1}
-  length: 1.5
+  length: 1.15
   aim: {x: 25, y: 35}
   sweepAngle: 30
   sweepSpeed: {x: 0.35, y: 2.4}
-  width: {x: 0.006, y: 0.016}
+  width: {x: 0.014, y: 0.034}
   alpha: {x: 0.25, y: 1}
   phaseOffset: 0
 --- !u!1 &110

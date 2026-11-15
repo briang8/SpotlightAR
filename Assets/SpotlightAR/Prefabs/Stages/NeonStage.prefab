@@ -62,11 +62,11 @@ MonoBehaviour:
   focusPoint: {fileID: 251}
   lightPool: {fileID: 243}
   glowColor: {r: 1, g: 0.36, b: 0.78, a: 1}
-  glowRadius: 1.2
+  glowRadius: 0.9
   idleLevel: 0.12
   responsiveness: 8
   sustainThreshold: 0.35
-  poolIntensity: {x: 0.15, y: 1.1}
+  poolIntensity: {x: 0.12, y: 0.75}
   lasers: []
   discoBall: {fileID: 601}
   discoRenderer: {fileID: 613}

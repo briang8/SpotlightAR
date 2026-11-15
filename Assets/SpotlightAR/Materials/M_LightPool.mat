@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Intensity: 0.5
+    - _Intensity: 0.4
     - _Falloff: 1.5
     - _Billboard: 0
     - _SrcBlend: 1

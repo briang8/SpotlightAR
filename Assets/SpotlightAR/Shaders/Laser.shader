@@ -69,7 +69,7 @@ Shader "SpotlightAR/Laser"
                 half tip = 1.0h - smoothstep(_TipFade, 1.0h, input.uv.x);
 
                 half3 tint = input.color.rgb * _Color.rgb;
-                half3 rgb = (tint * glow + lerp(tint, 1.0h, 0.6h) * core) * (_Intensity * tip * input.color.a);
+                half3 rgb = (tint * glow + lerp(tint, 1.0h, 0.3h) * core) * (_Intensity * tip * input.color.a);
                 return half4(rgb, 0.0h);
             }
             ENDHLSL
