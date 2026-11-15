@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Styles/Theme.uss" />
+    <Style src="Styles/Components.uss" />
+    <Style src="Styles/Screens.uss" />
+    <ui:Template name="PlacementScreen" src="Screens/PlacementScreen.uxml" />
+    <ui:Template name="SingingHud" src="Screens/SingingHud.uxml" />
+    <ui:VisualElement name="safe-area" class="safe-area" picking-mode="Ignore">
+        <ui:Instance template="PlacementScreen" name="placement-screen" class="screen-host" picking-mode="Ignore" />
+        <ui:Instance template="SingingHud" name="singing-hud" class="screen-host" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

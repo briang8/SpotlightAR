@@ -1,0 +1,174 @@
+/* Screen layout for the placement screen and the singing HUD (screens_v2.png). */
+
+.safe-area {
+    flex-grow: 1;
+}
+
+.screen-host {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.screen {
+    opacity: 1;
+    translate: 0 0;
+    transition-property: opacity, translate;
+    transition-duration: 0.22s;
+    transition-timing-function: ease-out;
+}
+
+.screen--hidden {
+    opacity: 0;
+    translate: 0 24px;
+}
+
+.screen-root {
+    flex-grow: 1;
+    padding: 40px 44px 0 44px;
+}
+
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+/* ---------- Placement ---------- */
+
+.hint-card {
+    margin: 52px 70px 0 70px;
+    padding: 36px 44px;
+    border-radius: 36px;
+    background-color: var(--c-surface);
+    align-items: center;
+}
+
+.hint-card__title {
+    font-size: 48px;
+    -unity-text-align: middle-center;
+}
+
+.hint-card__body {
+    margin-top: 10px;
+    font-size: 36px;
+    color: var(--c-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.sheet {
+    margin: 0 -44px;
+    padding: 48px 48px 64px 48px;
+    border-top-left-radius: 56px;
+    border-top-right-radius: 56px;
+    background-color: var(--c-bg);
+}
+
+.sheet__row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.sheet__meta {
+    font-size: 34px;
+    color: var(--c-muted);
+}
+
+/* ---------- Singing HUD ---------- */
+
+.song-pill {
+    flex-grow: 1;
+    margin-left: 28px;
+    padding: 24px 40px 26px 40px;
+    border-radius: 60px;
+    background-color: var(--c-surface);
+}
+
+.song-pill__row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.song-pill__title {
+    font-size: 36px;
+}
+
+.song-pill__time {
+    font-size: 32px;
+    color: var(--c-muted);
+}
+
+.player-slot {
+    height: 0;
+}
+
+.hype-row {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 40px;
+}
+
+.score-card {
+    padding: 22px 36px;
+    border-radius: 32px;
+    background-color: var(--c-surface);
+    align-items: flex-end;
+}
+
+.score-card__score {
+    font-size: 66px;
+}
+
+.score-card__hype {
+    font-size: 32px;
+    color: var(--c-green);
+}
+
+.notice {
+    align-self: center;
+    max-width: 900px;
+    margin-bottom: 24px;
+    padding: 18px 32px;
+    border-radius: 24px;
+    background-color: rgba(70, 22, 26, 0.92);
+    font-size: 32px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.hud-panel {
+    margin: 0 -44px;
+    padding: 40px 52px 60px 52px;
+    border-top-left-radius: 56px;
+    border-top-right-radius: 56px;
+    background-color: var(--c-bg);
+}
+
+.hud-panel__meter-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 36px;
+}
+
+.hud-panel__caption {
+    width: 130px;
+    font-size: 32px;
+    color: var(--c-muted);
+    white-space: normal;
+}
+
+.controls {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+}

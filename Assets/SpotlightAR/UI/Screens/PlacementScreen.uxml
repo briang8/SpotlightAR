@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="placement-root" class="screen-root" picking-mode="Ignore">
+        <ui:VisualElement class="top-bar" picking-mode="Ignore">
+            <ui:Button name="close-button" class="round-button round-button--small">
+                <SpotlightAR.UI.Icon glyph="Close" />
+            </ui:Button>
+            <ui:VisualElement name="status-chip" class="status-chip">
+                <ui:VisualElement class="status-chip__dot" />
+                <ui:Label name="status-label" text="Looking for a surface" class="status-chip__label t-medium" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="hint-card" class="hint-card">
+            <ui:Label name="hint-title" text="Scan the room" class="hint-card__title t-semibold" />
+            <ui:Label name="hint-body" text="Move your phone slowly over a floor or table." class="hint-card__body" />
+        </ui:VisualElement>
+        <ui:VisualElement class="spacer" picking-mode="Ignore" />
+        <ui:VisualElement name="placement-sheet" class="sheet">
+            <ui:VisualElement class="sheet__row">
+                <ui:Label name="stage-label" text="Stage: Club Neon" class="sheet__meta" />
+                <ui:Label name="size-label" text="Size: tabletop" class="sheet__meta" />
+            </ui:VisualElement>
+            <ui:VisualElement class="segmented">
+                <ui:Button name="size-tabletop" text="Tabletop" class="segment segment--selected t-medium" />
+                <ui:Button name="size-room" text="Room" class="segment t-medium" />
+                <ui:Button name="size-life" text="Life size" class="segment t-medium" />
+            </ui:VisualElement>
+            <ui:Button name="place-button" text="Place here and start" class="primary-button t-semibold" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

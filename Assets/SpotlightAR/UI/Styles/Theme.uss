@@ -1,0 +1,49 @@
+/* Spotlight AR design tokens: dark night-out UI with one warm amber accent.
+   Sizes are in panel units for a 1080-wide reference screen (see Panel Settings). */
+
+:root {
+    --c-bg: #0E0F16;
+    --c-surface: rgba(14, 15, 22, 0.88);
+    --c-surface-raised: #1B1C29;
+    --c-border: #2A2B3A;
+    --c-text: #F5F5F7;
+    --c-muted: #A3A6B5;
+    --c-amber: #FFB547;
+    --c-amber-pressed: #E89F33;
+    --c-amber-tint: #2A2215;
+    --c-on-amber: #1A1206;
+    --c-green: #6EE7A0;
+    --c-danger: #FF6B6B;
+
+    color: var(--c-text);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* Body text: Inter. -unity-font-definition is reset so the TTF below is used. */
+.unity-text-element {
+    -unity-font-definition: initial;
+    -unity-font: url("../Fonts/Inter-Regular.ttf");
+    color: var(--c-text);
+}
+
+.t-medium {
+    -unity-font: url("../Fonts/Inter-Medium.ttf");
+}
+
+.t-semibold {
+    -unity-font: url("../Fonts/Inter-SemiBold.ttf");
+}
+
+.t-bold {
+    -unity-font: url("../Fonts/Inter-Bold.ttf");
+}
+
+/* Headings: Bricolage Grotesque, bold and poster-like. */
+.heading {
+    -unity-font: url("../Fonts/BricolageGrotesque-ExtraBold.ttf");
+    letter-spacing: -0.5px;
+}
+
+.heading--bold {
+    -unity-font: url("../Fonts/BricolageGrotesque-Bold.ttf");
+}
