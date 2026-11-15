@@ -115,3 +115,7 @@ InitTestScene*.unity*
 
 # Local-only design docs (GDD PDF, mockups) - never commit
 /[Dd]ocs/
+
+# API keys and other secrets - local only, never commit
+/Assets/SpotlightAR/Resources/Secrets/
+/Assets/SpotlightAR/Resources/Secrets.meta
