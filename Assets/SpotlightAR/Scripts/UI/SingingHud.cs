@@ -22,6 +22,9 @@ namespace SpotlightAR.UI
         readonly Icon micIcon;
         readonly Icon pauseIcon;
         readonly Button micButton;
+        readonly VisualElement playerSlot;
+        readonly VisualElement playerCover;
+        readonly Label playerCaption;
 
         float meterTimer;
         bool muted;
@@ -45,6 +48,9 @@ namespace SpotlightAR.UI
             micIcon = Require<Icon>("mic-icon");
             pauseIcon = Require<Icon>("pause-icon");
             micButton = Require<Button>("mic-button");
+            playerSlot = Require<VisualElement>("player-slot");
+            playerCover = Require<VisualElement>("player-cover");
+            playerCaption = Require<Label>("player-caption");
 
             Require<Button>("close-button").clicked += () => CloseRequested?.Invoke();
             Require<Button>("move-button").clicked += () => MoveRequested?.Invoke();
@@ -56,6 +62,24 @@ namespace SpotlightAR.UI
         }
 
         public void SetSong(string title) => songTitle.text = title;
+
+        /// <summary>
+        /// Reserve the video box. On the phone the native YouTube view is laid on top of it;
+        /// in the Editor it shows the song cover as a stand-in.
+        /// </summary>
+        public void ShowPlayer(Songs.Song song, bool realVideo)
+        {
+            playerSlot.style.display = DisplayStyle.Flex;
+            playerSlot.EnableInClassList("player-slot--simulated", !realVideo);
+            playerCaption.text = realVideo ? string.Empty : "The karaoke video plays here on the phone";
+            playerCover.style.backgroundImage = StyleKeyword.None;
+            if (!realVideo && song != null) CoverImages.Apply(playerCover, song.GetCoverUrl());
+        }
+
+        public void HidePlayer() => playerSlot.style.display = DisplayStyle.None;
+
+        /// <summary>The video box in panel coordinates, or an empty rect while it is not laid out.</summary>
+        public Rect PlayerPanelRect => playerSlot.resolvedStyle.display == DisplayStyle.None ? Rect.zero : playerSlot.worldBound;
 
         /// <summary>Shows "elapsed / duration". A duration of 0 shows elapsed time only.</summary>
         public void SetTime(float elapsed, float duration)

@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="song-row" class="song-row">
+        <ui:Label name="rank" text="2" class="song-row__rank heading" />
+        <ui:VisualElement name="row-cover" class="song-row__cover cover" />
+        <ui:VisualElement class="song-row__text">
+            <ui:Label name="row-title" text="Song title" class="song-row__title t-semibold" />
+            <ui:Label name="row-meta" text="Artist · Genre" class="song-row__meta" />
+        </ui:VisualElement>
+        <ui:Label name="row-duration" text="3:42" class="song-row__duration" />
+    </ui:VisualElement>
+</ui:UXML>

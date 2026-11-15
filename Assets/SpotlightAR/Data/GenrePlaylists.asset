@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a16e85aa93eb4b49bc81982068a63ed, type: 3}
+  m_Name: GenrePlaylists
+  m_EditorClassIdentifier: SpotlightAR::SpotlightAR.Songs.GenreCatalog
+  genres:
+  - displayName: Afrobeats
+    playlistId: PLON1n1fbcBoo
+  - displayName: Pop
+    playlistId: PLQLpbxe447Zk
+  - displayName: Rap
+    playlistId: PLDH_0CsZ3SAo
+  - displayName: R&B
+    playlistId: PLQTVLLRJia7M
+  - displayName: Gospel
+    playlistId: PLeTrSkyrg03k
+  songsPerGenre: 25

@@ -840,10 +840,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 424fd00ef57c2df8f31666f6ccb43e65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  arSession: {fileID: 1102}
   mic: {fileID: 1702}
   stagePlacer: {fileID: 1802}
   gestures: {fileID: 1803}
+  catalog: {fileID: 657186903}
+  songPlayer: {fileID: 1726623972}
   ui: {fileID: 1903}
+  stageThemes:
+  - displayName: Club Neon
+    tagline: Lasers and a disco ball. Pop, Afrobeats, Rap.
+    accent: {r: 1, g: 0.48, b: 0.84, a: 1}
+    prefab: {fileID: 102, guid: 29306af70ba92b8631b3e4c0a803139b, type: 3}
+  - displayName: Arena
+    tagline: Lighting truss, speakers and a big crowd.
+    accent: {r: 1, g: 0.71, b: 0.28, a: 1}
+    prefab: {fileID: 0}
+  - displayName: Rooftop
+    tagline: City skyline and string lights for slow songs.
+    accent: {r: 0.43, g: 0.78, b: 1, a: 1}
+    prefab: {fileID: 0}
   targetFrameRate: 30
 --- !u!1 &1700
 GameObject:
@@ -1039,6 +1055,96 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49f565265b16ec47efe469600a77fdab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  songRowTemplate: {fileID: 9197481963319205126, guid: 06f111d8048c82c42b4d36cc4e515aa4, type: 3}
+--- !u!1 &657186902
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 657186904}
+  - component: {fileID: 657186903}
+  m_Layer: 0
+  m_Name: Song Catalog
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &657186903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657186902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 526527b9b7d472a4fafe7379e6168c1a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SpotlightAR::SpotlightAR.Songs.SongCatalog
+  genres: {fileID: 11400000, guid: ca727629e5eb8ff45905a65cd3598992, type: 2}
+--- !u!4 &657186904
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 657186902}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1726623971
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1726623973}
+  - component: {fileID: 1726623972}
+  m_Layer: 0
+  m_Name: Song Player
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1726623972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1726623971}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3c091fbeceee7a4986fea6c42a1578b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SpotlightAR::SpotlightAR.Songs.Playback.SongPlayer
+--- !u!4 &1726623973
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1726623971}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1051,3 +1157,5 @@ SceneRoots:
   - {fileID: 1701}
   - {fileID: 1801}
   - {fileID: 1901}
+  - {fileID: 657186904}
+  - {fileID: 1726623973}

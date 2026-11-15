@@ -108,7 +108,34 @@
 }
 
 .player-slot {
-    height: 0;
+    display: none;
+    width: 720px;
+    height: 405px;
+    align-self: center;
+    margin-top: 28px;
+    border-radius: 28px;
+    background-color: #000000;
+    overflow: hidden;
+    justify-content: flex-end;
+}
+
+.player-slot__cover {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.55;
+}
+
+.player-slot__caption {
+    margin: 0;
+    padding: 18px 24px;
+    font-size: 28px;
+    color: var(--c-text);
+    background-color: rgba(14, 15, 22, 0.8);
+    -unity-text-align: middle-center;
+    white-space: normal;
 }
 
 .hype-row {

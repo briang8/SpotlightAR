@@ -14,7 +14,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="player-slot" class="player-slot" picking-mode="Ignore" />
+        <ui:VisualElement name="player-slot" class="player-slot" picking-mode="Ignore">
+            <ui:VisualElement name="player-cover" class="player-slot__cover cover" picking-mode="Ignore" />
+            <ui:Label name="player-caption" class="player-slot__caption t-medium" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement class="hype-row" picking-mode="Ignore">
             <ui:VisualElement name="score-card" class="score-card">
                 <ui:Label name="score-label" text="LIVE" class="score-card__score heading" />

@@ -1,0 +1,35 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="setup-root" class="screen-root screen-root--opaque setup">
+        <ui:VisualElement class="top-bar">
+            <ui:Button name="back-button" class="round-button round-button--small">
+                <SpotlightAR.UI.Icon glyph="ChevronLeft" />
+            </ui:Button>
+            <ui:Label text="Song setup" class="setup__heading t-semibold" />
+            <ui:VisualElement class="top-bar__spacer" />
+        </ui:VisualElement>
+        <ui:ScrollView vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" class="setup__scroll">
+            <ui:VisualElement class="setup__song">
+                <ui:VisualElement name="setup-cover" class="setup__cover cover" />
+                <ui:VisualElement class="setup__song-text">
+                    <ui:Label name="setup-title" text="Golden Hour Drive" class="setup__title heading" />
+                    <ui:Label name="setup-meta" text="The Lantern Kids · Pop · 3:42" class="setup__meta" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label text="Pick your stage" class="section-title heading heading--bold" />
+            <ui:VisualElement name="stage-list" class="stage-list" />
+            <ui:Label text="Mic check" class="section-title heading heading--bold" />
+            <ui:VisualElement name="mic-panel" class="mic-panel">
+                <ui:VisualElement class="mic-panel__row">
+                    <ui:VisualElement class="mic-panel__dot" />
+                    <ui:Label name="mic-status" text="Mic check: sing a line" class="mic-panel__status t-semibold" />
+                </ui:VisualElement>
+                <SpotlightAR.UI.VoiceMeter name="setup-meter" bar-count="34" class="mic-panel__meter" />
+                <ui:Label name="mic-tip" text="Say or sing anything to test your mic." class="mic-panel__tip" />
+            </ui:VisualElement>
+        </ui:ScrollView>
+        <ui:VisualElement class="setup__actions">
+            <ui:Button name="continue-button" text="Find a surface" class="primary-button" />
+            <ui:Button name="skip-mic-button" text="Continue without mic check" class="text-button text-button--centered t-medium" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

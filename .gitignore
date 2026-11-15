@@ -119,3 +119,4 @@ InitTestScene*.unity*
 # API keys and other secrets - local only, never commit
 /Assets/SpotlightAR/Resources/Secrets/
 /Assets/SpotlightAR/Resources/Secrets.meta
+/Assets/SpotlightAR/Resources.meta

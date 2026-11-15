@@ -14,11 +14,16 @@ namespace SpotlightAR.UI
     {
         readonly List<UIScreen> screens = new List<UIScreen>();
 
+        [Tooltip("One row of the song list (UI/Templates/SongRow.uxml).")]
+        [SerializeField] VisualTreeAsset songRowTemplate;
+
         UIDocument document;
         VisualElement root;
         VisualElement safeArea;
         Rect appliedSafeArea;
 
+        public HomeScreen Home { get; private set; }
+        public SongSetupScreen Setup { get; private set; }
         public PlacementScreen Placement { get; private set; }
         public SingingHud Hud { get; private set; }
         public UIScreen Active { get; private set; }
@@ -31,6 +36,8 @@ namespace SpotlightAR.UI
             safeArea = root.Q("safe-area") ?? root;
 
             screens.Clear();
+            Home = Register(new HomeScreen(root.Q("home-screen"), songRowTemplate));
+            Setup = Register(new SongSetupScreen(root.Q("setup-screen")));
             Placement = Register(new PlacementScreen(root.Q("placement-screen")));
             Hud = Register(new SingingHud(root.Q("singing-hud")));
 
@@ -61,6 +68,14 @@ namespace SpotlightAR.UI
         }
 
         public void UpdateHUD(int score) => Hud.SetScore(score);
+
+        /// <summary>Converts a rect in panel units to screen pixels (origin top-left).</summary>
+        public Rect PanelToScreen(Rect panelRect)
+        {
+            if (root == null || root.layout.width <= 0f) return Rect.zero;
+            float scale = Screen.width / root.layout.width;
+            return new Rect(panelRect.x * scale, panelRect.y * scale, panelRect.width * scale, panelRect.height * scale);
+        }
 
         /// <summary>True when a screen position (pixels, origin bottom-left) is over a UI element.</summary>
         public bool IsPointerOverUI(Vector2 screenPosition)

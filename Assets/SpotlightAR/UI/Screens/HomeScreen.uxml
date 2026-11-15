@@ -1,0 +1,58 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="home-root" class="screen-root screen-root--opaque home">
+        <ui:VisualElement class="home__header">
+            <ui:VisualElement class="home__titles">
+                <ui:Label name="greeting" text="Friday night" class="home__greeting t-medium" />
+                <ui:Label text="Ready to sing?" class="home__title heading" />
+            </ui:VisualElement>
+            <ui:VisualElement class="avatar">
+                <SpotlightAR.UI.Icon glyph="Star" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="search">
+            <SpotlightAR.UI.Icon glyph="Search" class="search__icon" />
+            <ui:TextField name="search-field" class="search__field" />
+        </ui:VisualElement>
+        <ui:ScrollView name="genre-chips" mode="Horizontal" horizontal-scroller-visibility="Hidden" vertical-scroller-visibility="Hidden" class="chips" />
+        <ui:ScrollView name="home-scroll" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" class="home__scroll">
+            <ui:VisualElement name="featured-card" class="featured">
+                <ui:VisualElement name="featured-cover" class="featured__cover cover" />
+                <ui:VisualElement class="featured__badge">
+                    <ui:VisualElement class="featured__badge-dot" />
+                    <ui:Label text="NUMBER 1 TODAY" class="featured__badge-text t-bold" />
+                </ui:VisualElement>
+                <ui:VisualElement class="featured__info">
+                    <ui:VisualElement class="featured__text">
+                        <ui:Label name="featured-title" text="Golden Hour Drive" class="featured__title heading" />
+                        <ui:Label name="featured-meta" text="The Lantern Kids · 3:42 · Pop" class="featured__meta" />
+                    </ui:VisualElement>
+                    <ui:Button name="featured-sing" class="round-button round-button--primary featured__sing">
+                        <SpotlightAR.UI.Icon glyph="Mic" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement name="featured-dots" class="dots" />
+            <ui:VisualElement class="list-header">
+                <ui:Label name="list-title" text="Top this week" class="list-header__title heading--bold heading" />
+                <ui:Button name="see-all" text="See all" class="text-button t-semibold" />
+            </ui:VisualElement>
+            <ui:Label name="home-status" text="Loading songs…" class="home__status" />
+            <ui:VisualElement name="song-list" class="song-list" />
+        </ui:ScrollView>
+        <ui:VisualElement class="nav">
+            <ui:Button name="nav-home" class="nav__item nav__item--active">
+                <SpotlightAR.UI.Icon glyph="Home" />
+                <ui:Label text="Home" class="nav__label t-semibold" />
+            </ui:Button>
+            <ui:Button name="nav-library" class="nav__item nav__item--soon">
+                <SpotlightAR.UI.Icon glyph="Library" />
+            </ui:Button>
+            <ui:Button name="nav-sing" class="nav__item nav__sing">
+                <SpotlightAR.UI.Icon glyph="Mic" />
+            </ui:Button>
+            <ui:Button name="nav-stages" class="nav__item nav__item--soon">
+                <SpotlightAR.UI.Icon glyph="Cube" />
+            </ui:Button>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

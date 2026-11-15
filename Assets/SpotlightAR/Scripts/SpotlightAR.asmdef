@@ -5,7 +5,8 @@
         "Unity.InputSystem",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
-        "Unity.XR.CoreUtils"
+        "Unity.XR.CoreUtils",
+        "unity-webview"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -14,6 +15,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "net.gree.unity-webview",
+            "expression": "",
+            "define": "SPOTLIGHT_WEBVIEW"
+        }
+    ],
     "noEngineReferences": false
 }

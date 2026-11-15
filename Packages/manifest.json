@@ -7,6 +7,7 @@
     "com.unity.mobile.android-logcat": "1.4.7",
     "com.unity.multiplayer.center": "1.0.1",
     "com.unity.render-pipelines.universal": "17.3.0",
+    "net.gree.unity-webview": "https://github.com/gree/unity-webview.git?path=/dist/package-nofragment#950cfbac14dbbf72e87548e77ef11ecc8843988e",
     "com.unity.xr.arcore": "6.5.0",
     "com.unity.xr.arfoundation": "6.5.0",
     "com.unity.xr.arkit": "6.5.0",
