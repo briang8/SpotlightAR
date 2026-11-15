@@ -1,0 +1,115 @@
+using UnityEngine;
+
+namespace SpotlightAR.Stages
+{
+    /// <summary>
+    /// Base class for every stage theme. It owns the shared rig (spotlights, light pool, crowd)
+    /// and turns the player's loudness into a smoothed "show level". Each theme adds its own
+    /// effects by overriding <see cref="OnReact"/> (Template Method pattern).
+    /// </summary>
+    public abstract class Stage : MonoBehaviour
+    {
+        static readonly int GlowColorId = Shader.PropertyToID("_StageGlowColor");
+        static readonly int GlowLevelId = Shader.PropertyToID("_StageGlowLevel");
+        static readonly int GlowCenterId = Shader.PropertyToID("_StageGlowCenter");
+        static readonly int IntensityId = Shader.PropertyToID("_Intensity");
+
+        [SerializeField] string displayName = "Stage";
+
+        [Header("Shared rig")]
+        [Tooltip("Leave empty to use every StageLight under this stage.")]
+        [SerializeField] protected StageLight[] lights;
+        [Tooltip("Leave empty to use the CrowdController under this stage.")]
+        [SerializeField] protected CrowdController crowd;
+        [Tooltip("Where the spotlights point (usually the centre of the deck).")]
+        [SerializeField] protected Transform focusPoint;
+        [Tooltip("Additive glow on the deck under the spotlights.")]
+        [SerializeField] protected Renderer lightPool;
+
+        [Header("Stage glow (fake lighting on stage materials)")]
+        [SerializeField] Color glowColor = new Color(1f, 0.71f, 0.28f);
+        [Tooltip("Radius of the glow around the stage centre, in stage units.")]
+        [SerializeField] float glowRadius = 1.2f;
+
+        [Header("Response")]
+        [Tooltip("Show level when nobody is singing, so the stage never looks dead.")]
+        [SerializeField, Range(0f, 0.5f)] float idleLevel = 0.12f;
+        [Tooltip("How fast the show follows the voice.")]
+        [SerializeField] float responsiveness = 8f;
+        [Tooltip("Loudness above which a note counts as held (for long-note effects).")]
+        [SerializeField, Range(0f, 1f)] float sustainThreshold = 0.35f;
+        [SerializeField] Vector2 poolIntensity = new Vector2(0.15f, 1.1f);
+
+        MaterialPropertyBlock poolBlock;
+
+        public string DisplayName => displayName;
+
+        /// <summary>Smoothed show level, 0..1.</summary>
+        protected float Level { get; private set; }
+
+        /// <summary>Seconds the current note has been held above the sustain threshold.</summary>
+        protected float Sustain { get; private set; }
+
+        protected virtual void Awake()
+        {
+            if (lights == null || lights.Length == 0) lights = GetComponentsInChildren<StageLight>(true);
+            if (crowd == null) crowd = GetComponentInChildren<CrowdController>(true);
+
+            Transform target = focusPoint != null ? focusPoint : transform;
+            foreach (StageLight stageLight in lights) stageLight.AimAt(target);
+
+            poolBlock = new MaterialPropertyBlock();
+            Level = idleLevel;
+        }
+
+        protected virtual void OnDisable()
+        {
+            Shader.SetGlobalFloat(GlowLevelId, 0f);
+        }
+
+        /// <summary>Feed the player's loudness (0..1) into the show. Call once per frame.</summary>
+        public void ReactTo(float loudness)
+        {
+            float dt = Time.deltaTime;
+            float target = Mathf.Max(idleLevel, Mathf.Clamp01(loudness));
+            Level = Mathf.Lerp(Level, target, 1f - Mathf.Exp(-responsiveness * dt));
+            Sustain = loudness > sustainThreshold ? Sustain + dt : Mathf.Max(0f, Sustain - dt * 3f);
+
+            foreach (StageLight stageLight in lights) stageLight.SetLevel(Level);
+            if (crowd != null) crowd.SetEnergy(Level);
+            UpdateGlow();
+            OnReact(Level);
+        }
+
+        /// <summary>Set the crowd hype multiplier display (1 to 3).</summary>
+        public void SetHype(int multiplier)
+        {
+            if (crowd != null) crowd.SetHype(multiplier);
+        }
+
+        /// <summary>The end-of-song moment: every light flashes and the crowd cheers.</summary>
+        public virtual void PlayFinale()
+        {
+            foreach (StageLight stageLight in lights) stageLight.Flash();
+            if (crowd != null) crowd.Cheer();
+        }
+
+        /// <summary>Theme-specific effects (lasers, sparks, string lights...).</summary>
+        protected abstract void OnReact(float level);
+
+        void UpdateGlow()
+        {
+            // One set of global shader values lights every stage material at once,
+            // which replaces real-time lights (disabled on the mobile URP asset for speed).
+            Vector3 centre = transform.position;
+            Shader.SetGlobalColor(GlowColorId, glowColor);
+            Shader.SetGlobalFloat(GlowLevelId, Level);
+            Shader.SetGlobalVector(GlowCenterId, new Vector4(centre.x, centre.y, centre.z, glowRadius * transform.lossyScale.x));
+
+            if (lightPool == null) return;
+            lightPool.GetPropertyBlock(poolBlock);
+            poolBlock.SetFloat(IntensityId, Mathf.Lerp(poolIntensity.x, poolIntensity.y, Level));
+            lightPool.SetPropertyBlock(poolBlock);
+        }
+    }
+}
