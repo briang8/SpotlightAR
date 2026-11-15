@@ -19,31 +19,31 @@
     background-color: rgba(0, 0, 0, 0);
 }
 
-/* Body text: Inter. -unity-font-definition is reset so the TTF below is used. */
+/* Body text: Inter. Font assets are pre-baked SDF atlases (Latin + accents),
+   with a small dynamic fallback for rare characters in song titles. */
 .unity-text-element {
-    -unity-font-definition: initial;
-    -unity-font: url("../Fonts/Inter-Regular.ttf");
+    -unity-font-definition: url("../Fonts/Inter-Regular-SDF.asset");
     color: var(--c-text);
 }
 
 .t-medium {
-    -unity-font: url("../Fonts/Inter-Medium.ttf");
+    -unity-font-definition: url("../Fonts/Inter-Medium-SDF.asset");
 }
 
 .t-semibold {
-    -unity-font: url("../Fonts/Inter-SemiBold.ttf");
+    -unity-font-definition: url("../Fonts/Inter-SemiBold-SDF.asset");
 }
 
 .t-bold {
-    -unity-font: url("../Fonts/Inter-Bold.ttf");
+    -unity-font-definition: url("../Fonts/Inter-Bold-SDF.asset");
 }
 
 /* Headings: Bricolage Grotesque, bold and poster-like. */
 .heading {
-    -unity-font: url("../Fonts/BricolageGrotesque-ExtraBold.ttf");
+    -unity-font-definition: url("../Fonts/BricolageGrotesque-ExtraBold-SDF.asset");
     letter-spacing: -0.5px;
 }
 
 .heading--bold {
-    -unity-font: url("../Fonts/BricolageGrotesque-Bold.ttf");
+    -unity-font-definition: url("../Fonts/BricolageGrotesque-Bold-SDF.asset");
 }

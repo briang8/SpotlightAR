@@ -25,11 +25,11 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Fill: 0.06
-    - _DotOpacity: 0.7
-    - _Spacing: 0.08
-    - _DotSize: 0.12
-    - _FadeDistance: 2.5
+    - _Fill: 0.035
+    - _DotOpacity: 0.55
+    - _Spacing: 0.1
+    - _DotSize: 0.06
+    - _FadeDistance: 2
     m_Colors:
     - _Color: {r: 1, g: 0.71, b: 0.28, a: 1}
   m_BuildTextureStacks: []
