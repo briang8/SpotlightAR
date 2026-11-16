@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SpotlightAR.AR;
 using SpotlightAR.Audio;
+using SpotlightAR.Scoring;
 using SpotlightAR.Songs;
 using SpotlightAR.Songs.Playback;
 using SpotlightAR.Stages;
@@ -14,13 +15,14 @@ namespace SpotlightAR.Core
 {
     /// <summary>
     /// Runs a session and connects the systems together (Mediator): the screens raise events,
-    /// the GameManager decides what happens next, and the AR, audio, song and stage systems
-    /// never need to know about each other.
-    /// Flow: Home → Song setup → Scan &amp; place → Sing → (Results) → Home.
+    /// the GameManager decides what happens next, and the AR, audio, song, scoring and stage
+    /// systems never need to know about each other.
+    /// Flow: Home → Song setup → Scan &amp; place → Sing → Results → Sing again / Home.
     /// </summary>
     public sealed class GameManager : MonoBehaviour
     {
-        const float ReturnHomeDelay = 3f;
+        const float ResultsDelay = 1.8f;
+        const float HeadphonesTipSeconds = 5f;
 
         [Header("Systems")]
         [SerializeField] ARSession arSession;
@@ -34,15 +36,23 @@ namespace SpotlightAR.Core
         [Header("Stages")]
         [SerializeField] List<StageTheme> stageThemes = new List<StageTheme>();
 
+        [Header("Scoring")]
+        [SerializeField] ScoringSettings scoring = new ScoringSettings();
+
         [Header("Performance")]
         [Tooltip("ARCore delivers camera frames at 30 FPS, so rendering faster only costs battery.")]
         [SerializeField] int targetFrameRate = 30;
 
         readonly MicCheck micCheck = new MicCheck();
+        ScoreManager score;
+        PlayerProfile profile;
+        PerformanceResult pendingResult;
         string selectedGenre = HomeScreen.ForYou;
         string searchQuery = string.Empty;
         int selectedStage;
-        float returnHomeAt = -1f;
+        float resultsAt = -1f;
+        float noticeClearAt = -1f;
+        bool showingTapHint;
 
         public GameState State { get; private set; } = GameState.Home;
         public Song SelectedSong { get; private set; }
@@ -53,6 +63,8 @@ namespace SpotlightAR.Core
         {
             Application.targetFrameRate = targetFrameRate;
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            score = new ScoreManager(scoring);
+            profile = new PlayerProfile();
         }
 
         void Start()
@@ -62,6 +74,7 @@ namespace SpotlightAR.Core
             WireSetup();
             WirePlacement();
             WireHud();
+            WireResults();
             WireSystems();
 
             ui.Home.SetGenres(GenreNames());
@@ -123,17 +136,34 @@ namespace SpotlightAR.Core
             hud.FinaleRequested += () => stagePlacer.Placed?.PlayFinale();
         }
 
+        void WireResults()
+        {
+            ui.Results.SingAgainRequested += () => BeginPerformance(restart: true);
+            ui.Results.NewSongRequested += EnterHome;
+        }
+
         void WireSystems()
         {
             catalog.GenreLoaded += (_, _, _) => RefreshHomeList();
             catalog.GenreFailed += (_, _) => RefreshHomeList();
             songPlayer.StateChanged += OnPlaybackState;
-            songPlayer.Failed += message => ui.Hud.ShowNotice(message);
+            songPlayer.Failed += message => ShowNotice(message, 8f);
             mic.PermissionDenied += () =>
             {
-                const string message = "Microphone access is off. Allow it in Settings so the stage can hear you.";
-                ui.Hud.ShowNotice(message);
+                ShowNotice("Microphone access is off. Allow it in Settings so the stage can hear you.", 8f);
                 ui.Setup.ShowMicResult(MicCheck.Result.NeedsHelp);
+            };
+
+            score.HypeChanged += hype =>
+            {
+                stagePlacer.Placed?.SetHype(hype);
+                ui.Hud.SetHype(hype);
+                ui.Hud.PulseScore();
+            };
+            score.MilestoneReached += _ =>
+            {
+                stagePlacer.Placed?.OnMilestone();
+                ui.Hud.PulseScore();
             };
         }
 
@@ -144,7 +174,7 @@ namespace SpotlightAR.Core
             songPlayer.Stop();
             stagePlacer.Clear();
             SetArActive(false);
-            returnHomeAt = -1f;
+            resultsAt = -1f;
             ui.Show(ui.Home);
             RefreshHomeList();
             SetState(GameState.Home);
@@ -177,42 +207,60 @@ namespace SpotlightAR.Core
             SetState(GameState.Placing);
         }
 
-        /// <summary>Lock the stage, start the song and start singing.</summary>
+        /// <summary>Lock the stage and start (or resume) the song.</summary>
         public void StartSession()
         {
             if (!stagePlacer.ConfirmPlacement()) return;
+            bool resuming = songPlayer.Current != null && songPlayer.Current == SelectedSong && State == GameState.Placing && score.Score > 0;
+            BeginPerformance(restart: !resuming);
+        }
 
-            bool resuming = songPlayer.Current != null && songPlayer.Current == SelectedSong;
-            if (resuming) songPlayer.Resume();
-            else songPlayer.Play(SelectedSong);
+        void BeginPerformance(bool restart)
+        {
+            resultsAt = -1f;
+            mic.StartListening();
+
+            if (restart)
+            {
+                songPlayer.Play(SelectedSong);
+                score.Begin();
+                stagePlacer.Placed?.SetHype(1);
+                ui.Hud.SetScore(0);
+                ui.Hud.SetHype(1);
+                ShowNotice("Tip: wear headphones so the mic hears you, not the song.", HeadphonesTipSeconds);
+            }
+            else
+            {
+                songPlayer.Resume();
+            }
 
             ui.Hud.SetSong(SelectedSong.title);
             ui.Hud.ShowPlayer(SelectedSong, songPlayer.ShowsVideo);
             ui.Hud.SetPaused(false);
             ui.Hud.SetMuted(mic.Muted);
-            ui.Hud.SetHype(1);
-            ui.Hud.ShowNotice(null);
             ui.Show(ui.Hud);
             SetState(GameState.Singing);
         }
 
         /// <summary>
-        /// Finish the performance. A completed song plays the finale before returning home
-        /// (iteration 3 replaces this with the results screen).
+        /// Finish the performance. A completed song plays the finale, saves the result and
+        /// shows the results screen; closing early goes straight home with no result.
         /// </summary>
         public void EndSession(bool completed)
         {
-            if (completed)
-            {
-                stagePlacer.Placed?.PlayFinale();
-                ui.Hud.ShowNotice("Encore! That's the end of the song.");
-                returnHomeAt = Time.time + ReturnHomeDelay;
-                SetState(GameState.Results);
-            }
-            else
+            if (!completed)
             {
                 EnterHome();
+                return;
             }
+
+            stagePlacer.Placed?.PlayFinale();
+            pendingResult = score.BuildResult(SelectedSong.videoId, SelectedSong.title);
+            profile.SaveResult(pendingResult);
+            songPlayer.Stop();
+            ShowNotice(pendingResult.stars >= 4 ? "Encore! The crowd loved it." : "That's the end of the song!", ResultsDelay);
+            resultsAt = Time.time + ResultsDelay;
+            SetState(GameState.Results);
         }
 
         void SetPaused(bool paused)
@@ -229,10 +277,12 @@ namespace SpotlightAR.Core
             switch (playback)
             {
                 case PlaybackState.WaitingForTap:
-                    ui.Hud.ShowNotice("Tap the video to start the song");
+                    ShowNotice("Tap the video to start the song", 0f);
+                    showingTapHint = true;
                     break;
                 case PlaybackState.Playing:
-                    ui.Hud.ShowNotice(null);
+                    if (showingTapHint) ShowNotice(null, 0f);
+                    showingTapHint = false;
                     break;
                 case PlaybackState.Ended:
                     EndSession(completed: true);
@@ -263,7 +313,19 @@ namespace SpotlightAR.Core
             }
 
             if (State != GameState.Singing && State != GameState.Paused) songPlayer.SetViewport(Rect.zero, false);
-            if (returnHomeAt > 0f && Time.time >= returnHomeAt) EnterHome();
+
+            if (noticeClearAt > 0f && Time.time >= noticeClearAt)
+            {
+                noticeClearAt = -1f;
+                ui.Hud.ShowNotice(null);
+            }
+
+            if (resultsAt > 0f && Time.time >= resultsAt)
+            {
+                resultsAt = -1f;
+                ui.Show(ui.Results);
+                ui.Results.ShowResult(pendingResult);
+            }
         }
 
         void UpdatePerformance()
@@ -273,6 +335,12 @@ namespace SpotlightAR.Core
 
             Stage stage = stagePlacer.Placed;
             if (stage != null) stage.ReactTo(loudness);
+
+            if (live)
+            {
+                score.AddFrame(loudness, mic.GetPitch(), Time.deltaTime);
+                ui.Hud.SetScore(score.Score);
+            }
 
             ui.Hud.Tick(loudness, Time.deltaTime);
             ui.Hud.SetTime(songPlayer.GetTime(), songPlayer.Duration);
@@ -285,7 +353,13 @@ namespace SpotlightAR.Core
         {
             // Android's back button arrives as Escape in the Input System.
             Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !keyboard.escapeKey.wasPressedThisFrame) return;
+            if (keyboard == null) return;
+
+#if UNITY_EDITOR
+            // Editor testing only: End key finishes the song now and shows the results.
+            if (keyboard.endKey.wasPressedThisFrame && (State == GameState.Singing || State == GameState.Paused)) EndSession(completed: true);
+#endif
+            if (!keyboard.escapeKey.wasPressedThisFrame) return;
 
             switch (State)
             {
@@ -293,10 +367,19 @@ namespace SpotlightAR.Core
                 case GameState.Placing: stagePlacer.Clear(); EnterSetup(); break;
                 case GameState.Singing:
                 case GameState.Paused: EndSession(completed: false); break;
+                case GameState.Results: EnterHome(); break;
             }
         }
 
         // ---------------- Helpers ----------------
+
+        /// <summary>Show a HUD notice. seconds &lt;= 0 keeps it until replaced.</summary>
+        void ShowNotice(string message, float seconds)
+        {
+            ui.Hud.ShowNotice(message);
+            showingTapHint = false;
+            noticeClearAt = message != null && seconds > 0f ? Time.time + seconds : -1f;
+        }
 
         void RefreshHomeList()
         {

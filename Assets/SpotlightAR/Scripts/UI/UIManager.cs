@@ -26,6 +26,7 @@ namespace SpotlightAR.UI
         public SongSetupScreen Setup { get; private set; }
         public PlacementScreen Placement { get; private set; }
         public SingingHud Hud { get; private set; }
+        public ResultsScreen Results { get; private set; }
         public UIScreen Active { get; private set; }
 
         void OnEnable()
@@ -40,6 +41,7 @@ namespace SpotlightAR.UI
             Setup = Register(new SongSetupScreen(root.Q("setup-screen")));
             Placement = Register(new PlacementScreen(root.Q("placement-screen")));
             Hud = Register(new SingingHud(root.Q("singing-hud")));
+            Results = Register(new ResultsScreen(root.Q("results-screen")));
 
             root.RegisterCallback<GeometryChangedEvent>(_ => ApplySafeArea(true));
         }

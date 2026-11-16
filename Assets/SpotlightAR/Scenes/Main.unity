@@ -853,13 +853,33 @@ MonoBehaviour:
     accent: {r: 1, g: 0.48, b: 0.84, a: 1}
     prefab: {fileID: 102, guid: 29306af70ba92b8631b3e4c0a803139b, type: 3}
   - displayName: Arena
-    tagline: Lighting truss, speakers and a big crowd.
+    tagline: Truss, speaker stacks, sparks and a big crowd.
     accent: {r: 1, g: 0.71, b: 0.28, a: 1}
-    prefab: {fileID: 0}
+    prefab: {fileID: 102, guid: 2c316295e582380d1b703ab94e114a06, type: 3}
   - displayName: Rooftop
-    tagline: City skyline and string lights for slow songs.
+    tagline: City skyline, string lights and fireflies.
     accent: {r: 0.43, g: 0.78, b: 1, a: 1}
-    prefab: {fileID: 0}
+    prefab: {fileID: 102, guid: 7741eb099720f910611e7fd7f6647499, type: 3}
+  scoring:
+    voiceThreshold: 0.2
+    fullCreditLoudness: 0.55
+    pointsPerSecond: 10
+    hypeRise: 0.06
+    hypeFall: 0.12
+    silenceGrace: 1.5
+    hypeLevels: {x: 0.4, y: 0.8}
+    heldNoteSeconds: 0.5
+    sameNoteCents: 150
+    wobbleForZero: 60
+    heldNoteBonusPerSecond: 6
+    milestoneStep: 500
+    fullCoverage: 0.7
+    starThresholds:
+    - 0.15
+    - 0.35
+    - 0.55
+    - 0.72
+    - 0.86
   targetFrameRate: 30
 --- !u!1 &1700
 GameObject:
@@ -912,6 +932,8 @@ MonoBehaviour:
   ceilingDb: -12
   adaptiveNoiseFloor: 1
   noiseMarginDb: 6
+  pitchGate: 0.12
+  minPitchConfidence: 0.8
   attack: 18
   release: 5
 --- !u!1 &1800

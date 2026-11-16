@@ -62,6 +62,8 @@ namespace SpotlightAR.Stages
             Level = idleLevel;
         }
 
+        protected virtual void Start() { }
+
         protected virtual void OnDisable()
         {
             Shader.SetGlobalFloat(GlowLevelId, 0f);
@@ -81,11 +83,30 @@ namespace SpotlightAR.Stages
             OnReact(Level);
         }
 
-        /// <summary>Set the crowd hype multiplier display (1 to 3).</summary>
+        /// <summary>Current crowd hype multiplier (1 to 3).</summary>
+        protected int Hype { get; private set; } = 1;
+
+        /// <summary>Set the crowd hype multiplier (1 to 3). Themes react in <see cref="OnHypeChanged"/>.</summary>
         public void SetHype(int multiplier)
         {
-            if (crowd != null) crowd.SetHype(multiplier);
+            int clamped = Mathf.Clamp(multiplier, 1, 3);
+            if (clamped == Hype) return;
+            bool rising = clamped > Hype;
+            Hype = clamped;
+            if (crowd != null) crowd.SetHype(clamped);
+            if (rising) foreach (StageLight stageLight in lights) stageLight.Flash();
+            OnHypeChanged(clamped);
         }
+
+        /// <summary>The score passed a milestone: the crowd cheers and the theme can add its own effect.</summary>
+        public virtual void OnMilestone()
+        {
+            if (crowd != null) crowd.Cheer();
+            foreach (StageLight stageLight in lights) stageLight.Flash();
+        }
+
+        /// <summary>Called when hype changes level. Override to scale up a theme's effects.</summary>
+        protected virtual void OnHypeChanged(int hype) { }
 
         /// <summary>The end-of-song moment: every light flashes and the crowd cheers.</summary>
         public virtual void PlayFinale()

@@ -3,14 +3,17 @@
     <Style src="Styles/Components.uss" />
     <Style src="Styles/Screens.uss" />
     <Style src="Styles/Home.uss" />
+    <Style src="Styles/Results.uss" />
     <ui:Template name="HomeScreen" src="Screens/HomeScreen.uxml" />
     <ui:Template name="SongSetup" src="Screens/SongSetup.uxml" />
     <ui:Template name="PlacementScreen" src="Screens/PlacementScreen.uxml" />
     <ui:Template name="SingingHud" src="Screens/SingingHud.uxml" />
+    <ui:Template name="Results" src="Screens/Results.uxml" />
     <ui:VisualElement name="safe-area" class="safe-area" picking-mode="Ignore">
         <ui:Instance template="HomeScreen" name="home-screen" class="screen-host" picking-mode="Ignore" />
         <ui:Instance template="SongSetup" name="setup-screen" class="screen-host" picking-mode="Ignore" />
         <ui:Instance template="PlacementScreen" name="placement-screen" class="screen-host" picking-mode="Ignore" />
         <ui:Instance template="SingingHud" name="singing-hud" class="screen-host" picking-mode="Ignore" />
+        <ui:Instance template="Results" name="results-screen" class="screen-host" picking-mode="Ignore" />
     </ui:VisualElement>
 </ui:UXML>

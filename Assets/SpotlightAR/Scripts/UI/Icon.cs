@@ -13,6 +13,7 @@ namespace SpotlightAR.UI
         Pause,
         Play,
         Star,
+        StarFilled,
         Check,
         Search,
         Home,
@@ -108,6 +109,12 @@ namespace SpotlightAR.UI
                     break;
                 case IconGlyph.Star:
                     DrawStar(p);
+                    p.Stroke();
+                    break;
+                case IconGlyph.StarFilled:
+                    DrawStar(p);
+                    p.Fill();
+                    p.Stroke();
                     break;
                 case IconGlyph.Check:
                     Polyline(p, false, 5, 12.5f, 10, 17.5f, 19, 7);
@@ -177,7 +184,6 @@ namespace SpotlightAR.UI
                 else p.LineTo(point);
             }
             p.ClosePath();
-            p.Stroke();
         }
 
         void Line(Painter2D p, float x1, float y1, float x2, float y2)

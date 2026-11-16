@@ -1,0 +1,38 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="results-root" class="screen-root results" picking-mode="Ignore">
+        <ui:VisualElement class="spacer" picking-mode="Ignore" />
+        <ui:VisualElement name="results-card" class="results__card">
+            <ui:Label name="results-headline" text="Encore!" class="results__headline heading" />
+            <ui:Label name="results-song" text="Song title" class="results__song t-medium" />
+            <ui:VisualElement name="results-stars" class="results__stars" />
+            <ui:VisualElement class="results__score-row">
+                <ui:Label name="results-score" text="0" class="results__score heading" />
+                <ui:VisualElement name="results-new-best" class="results__badge">
+                    <ui:Label text="NEW BEST" class="results__badge-text t-bold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label name="results-best" text="Your best: 0" class="results__best" />
+            <ui:VisualElement class="stats">
+                <ui:VisualElement class="stat">
+                    <ui:Label name="stat-coverage" text="0%" class="stat__value heading heading--bold" />
+                    <ui:Label text="of the song sung" class="stat__label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat">
+                    <ui:Label name="stat-note" text="0.0s" class="stat__value heading heading--bold" />
+                    <ui:Label text="longest steady note" class="stat__label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat">
+                    <ui:Label name="stat-pitch" text="–" class="stat__value heading heading--bold" />
+                    <ui:Label name="stat-pitch-label" text="pitch steadiness" class="stat__label" />
+                </ui:VisualElement>
+                <ui:VisualElement class="stat">
+                    <ui:Label name="stat-hype" text="x1" class="stat__value heading heading--bold" />
+                    <ui:Label name="stat-hype-label" text="peak crowd hype" class="stat__label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label name="results-tip" text="Tip" class="results__tip" />
+            <ui:Button name="sing-again-button" text="Sing again" class="primary-button t-semibold" />
+            <ui:Button name="new-song-button" text="Pick a new song" class="secondary-button t-semibold" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

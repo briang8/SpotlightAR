@@ -12,9 +12,10 @@ namespace SpotlightAR.Audio
     /// the voice is never played back, which avoids echo through the speaker.
     /// </summary>
     [DisallowMultipleComponent]
-    public sealed class MicInput : MonoBehaviour, ILoudnessSource
+    public sealed class MicInput : MonoBehaviour, ILoudnessSource, IPitchSource
     {
         const float MinDb = -80f;
+        const int PitchWindow = 2048;
 
         [Header("Capture")]
         [Tooltip("Preferred sample rate. Clamped to what the device supports.")]
@@ -33,6 +34,12 @@ namespace SpotlightAR.Audio
         [Tooltip("How far above the measured room noise the voice has to be (dB).")]
         [SerializeField] float noiseMarginDb = 6f;
 
+        [Header("Pitch")]
+        [Tooltip("Only look for a pitch when loudness is above this (saves CPU in silence).")]
+        [SerializeField, Range(0f, 1f)] float pitchGate = 0.12f;
+        [Tooltip("Ignore pitch readings the detector is unsure about.")]
+        [SerializeField, Range(0f, 1f)] float minPitchConfidence = 0.8f;
+
         [Header("Smoothing")]
         [Tooltip("How quickly loudness rises when singing starts.")]
         [SerializeField] float attack = 18f;
@@ -47,6 +54,10 @@ namespace SpotlightAR.Audio
         float decibels = MinDb;
         float ambientDb = -60f;
         bool wantsToListen;
+        float[] pitchSamples;
+        PitchDetector pitchDetector;
+        float pitch;
+        int captureRate;
 
         /// <summary>Raised when capture starts (true) or stops (false).</summary>
         public event Action<bool> ListeningChanged;
@@ -66,6 +77,8 @@ namespace SpotlightAR.Audio
         public bool HasDevice => Microphone.devices.Length > 0;
 
         public float GetLoudness() => Muted ? 0f : level;
+
+        public float GetPitch() => Muted ? 0f : pitch;
 
         public bool IsListening() => clip != null && Microphone.IsRecording(device);
 
@@ -121,7 +134,10 @@ namespace SpotlightAR.Audio
 
             // A 1-second looping buffer is plenty: we only ever read the newest samples.
             clip = Microphone.Start(device, true, 1, rate);
+            captureRate = rate;
             samples = new float[sampleSize];
+            pitchSamples = new float[PitchWindow];
+            pitchDetector = new PitchDetector(PitchWindow);
             ListeningChanged?.Invoke(true);
         }
 
@@ -133,6 +149,7 @@ namespace SpotlightAR.Audio
             clip = null;
             level = 0f;
             peak = 0f;
+            pitch = 0f;
             ListeningChanged?.Invoke(false);
         }
 
@@ -155,6 +172,20 @@ namespace SpotlightAR.Audio
             float rate = target > level ? attack : release;
             level = Mathf.Lerp(level, target, 1f - Mathf.Exp(-rate * dt));
             peak = Mathf.Max(level, peak - 0.35f * dt);
+            pitch = target >= pitchGate ? ReadPitch() : 0f;
+        }
+
+        float ReadPitch()
+        {
+            int position = Microphone.GetPosition(device);
+            if (position <= 0 || pitchDetector == null) return 0f;
+
+            int start = position - PitchWindow;
+            if (start < 0) start += clip.samples;
+            if (!clip.GetData(pitchSamples, start)) return 0f;
+
+            float hz = pitchDetector.Detect(pitchSamples, captureRate, out float confidence);
+            return confidence >= minPitchConfidence ? hz : 0f;
         }
 
         bool TryReadDecibels(out float db)

@@ -20,7 +20,7 @@
         </ui:VisualElement>
         <ui:VisualElement class="hype-row" picking-mode="Ignore">
             <ui:VisualElement name="score-card" class="score-card">
-                <ui:Label name="score-label" text="LIVE" class="score-card__score heading" />
+                <ui:Label name="score-label" text="0" class="score-card__score heading" />
                 <ui:Label name="hype-label" text="Crowd hype x1" class="score-card__hype t-medium" />
             </ui:VisualElement>
         </ui:VisualElement>

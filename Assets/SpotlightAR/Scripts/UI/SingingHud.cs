@@ -91,7 +91,20 @@ namespace SpotlightAR.UI
 
         public void SetScore(int score) => scoreLabel.text = score.ToString("N0");
 
-        public void SetHype(int multiplier) => hypeLabel.text = $"Crowd hype x{multiplier}";
+        public void SetHype(int multiplier)
+        {
+            hypeLabel.text = $"Crowd hype x{multiplier}";
+            hypeLabel.EnableInClassList("score-card__hype--x2", multiplier == 2);
+            hypeLabel.EnableInClassList("score-card__hype--x3", multiplier >= 3);
+        }
+
+        /// <summary>A quick bounce of the score card (milestones, hype changes).</summary>
+        public void PulseScore()
+        {
+            VisualElement card = scoreLabel.parent;
+            card.AddToClassList("score-card--pulse");
+            card.schedule.Execute(() => card.RemoveFromClassList("score-card--pulse")).ExecuteLater(180);
+        }
 
         /// <summary>Feed the live loudness; the meter samples it at a steady rate.</summary>
         public void Tick(float loudness, float deltaTime)

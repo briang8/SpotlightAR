@@ -1,0 +1,170 @@
+/* Results card, shown over the AR view after the finale. */
+
+.results {
+    padding-bottom: 0;
+}
+
+.results__card {
+    margin: 0 -44px;
+    padding: 56px 52px 64px 52px;
+    border-top-left-radius: 64px;
+    border-top-right-radius: 64px;
+    background-color: rgba(14, 15, 22, 0.96);
+    align-items: stretch;
+}
+
+.results__headline {
+    font-size: 84px;
+    -unity-text-align: middle-center;
+}
+
+.results__song {
+    margin-top: 4px;
+    font-size: 34px;
+    color: var(--c-muted);
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.results__stars {
+    flex-direction: row;
+    justify-content: center;
+    margin: 36px 0 20px 0;
+}
+
+.results-star {
+    width: 96px;
+    height: 96px;
+    margin: 0 10px;
+    color: var(--c-border);
+    scale: 0.85 0.85;
+    /* Only scale animates: icons draw with the resolved colour, so a colour
+       transition would freeze them on the starting colour. */
+    transition-property: scale;
+    transition-duration: 0.25s;
+    transition-timing-function: ease-out-back;
+}
+
+.results-star--earned {
+    color: var(--c-amber);
+    scale: 1 1;
+}
+
+.results__score-row {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.results__score {
+    font-size: 128px;
+}
+
+.results__badge {
+    margin-left: 24px;
+    padding: 10px 22px;
+    border-radius: 30px;
+    background-color: var(--c-green);
+}
+
+.results__badge-text {
+    font-size: 26px;
+    letter-spacing: 1px;
+    color: var(--c-bg);
+}
+
+.results__best {
+    font-size: 32px;
+    color: var(--c-green);
+    -unity-text-align: middle-center;
+}
+
+.stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 40px -10px 0 -10px;
+}
+
+.stat {
+    width: 50%;
+    padding: 10px;
+}
+
+.stat > .stat__value,
+.stat > .stat__label {
+    padding: 0 28px;
+}
+
+.stat__value {
+    padding-top: 22px;
+    font-size: 54px;
+    background-color: var(--c-surface-raised);
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+}
+
+.stat__label {
+    padding-bottom: 24px;
+    font-size: 28px;
+    color: var(--c-muted);
+    background-color: var(--c-surface-raised);
+    border-bottom-left-radius: 28px;
+    border-bottom-right-radius: 28px;
+    white-space: normal;
+}
+
+.results__tip {
+    margin: 30px 0 36px 0;
+    padding: 26px 32px;
+    border-radius: 28px;
+    border-width: 2px;
+    border-color: var(--c-amber);
+    background-color: var(--c-amber-tint);
+    color: var(--c-text);
+    font-size: 31px;
+    white-space: normal;
+}
+
+.secondary-button {
+    height: 130px;
+    margin: 20px 0 0 0;
+    border-radius: 65px;
+    border-width: 3px;
+    border-color: var(--c-border);
+    background-color: rgba(0, 0, 0, 0);
+    color: var(--c-text);
+    font-size: 40px;
+    -unity-text-align: middle-center;
+}
+
+.secondary-button:hover,
+.secondary-button:focus {
+    border-color: var(--c-border);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.secondary-button:active {
+    scale: 0.97 0.97;
+}
+
+/* ---------- HUD score feedback ---------- */
+
+.score-card {
+    transition-property: scale;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out-back;
+}
+
+.score-card--pulse {
+    scale: 1.12 1.12;
+}
+
+.score-card__hype--x2 {
+    color: var(--c-amber);
+}
+
+.score-card__hype--x3 {
+    color: #FF7BD5;
+}

@@ -33,9 +33,21 @@ namespace SpotlightAR.Stages
             block = new MaterialPropertyBlock();
         }
 
+        protected override void Start()
+        {
+            OnHypeChanged(Hype);
+        }
+
+        /// <summary>x1: two lasers. x2: all four. x3: all four, sweeping harder.</summary>
+        protected override void OnHypeChanged(int hype)
+        {
+            for (int i = 0; i < lasers.Length; i++) lasers[i].gameObject.SetActive(hype >= 2 || i < 2);
+        }
+
         protected override void OnReact(float level)
         {
-            foreach (LaserBeam laser in lasers) laser.SetLevel(level);
+            float boost = Hype == 3 ? 0.25f : 0f;
+            foreach (LaserBeam laser in lasers) laser.SetLevel(Mathf.Clamp01(level + boost));
 
             float longNote = Mathf.Clamp01(Sustain / longNoteSeconds);
             float targetSpin = Mathf.Lerp(discoSpin.x, discoSpin.y, longNote);
