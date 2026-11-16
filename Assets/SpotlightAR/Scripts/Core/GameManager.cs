@@ -87,6 +87,7 @@ namespace SpotlightAR.Core
                 searchQuery = text?.Trim() ?? string.Empty;
                 RefreshHomeList();
             };
+            home.OnlineSearchRequested += SearchOnline;
             home.SongChosen += song =>
             {
                 SelectedSong = song;
@@ -323,6 +324,23 @@ namespace SpotlightAR.Core
             {
                 home.ShowLoading();
                 catalog.LoadGenre(selectedGenre);
+            }
+        }
+
+        async void SearchOnline(string query)
+        {
+            ui.Home.ShowOnlineSearching(query);
+            try
+            {
+                List<Song> results = await catalog.SearchOnline(query);
+                // Ignore late results if the player has typed something else meanwhile.
+                if (string.Equals(searchQuery, query, StringComparison.OrdinalIgnoreCase)) ui.Home.ShowOnlineResults(query, results);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[GameManager] YouTube search failed: {e.Message}");
+                if (string.Equals(searchQuery, query, StringComparison.OrdinalIgnoreCase))
+                    ui.Home.ShowError("YouTube search isn't available right now. Check your connection and try again.");
             }
         }
 

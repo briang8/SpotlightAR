@@ -78,6 +78,50 @@ namespace SpotlightAR.Songs
             return songs;
         }
 
+        /// <summary>
+        /// Searches all of YouTube for embeddable karaoke versions of a song.
+        /// Costs 100 quota units per call (plus 1 for durations), so callers should cache results.
+        /// </summary>
+        public async Awaitable<List<Song>> SearchKaraoke(string query, int maxResults)
+        {
+            if (!HasKey) throw new InvalidOperationException("YouTube API key missing.");
+            if (UnitsUsedToday + SearchCost + 1 > DailyQuota) throw new InvalidOperationException("Daily YouTube search limit reached. Try again tomorrow.");
+
+            string q = Uri.EscapeDataString($"{query} karaoke");
+            string url = $"{BaseUrl}search?part=snippet&type=video&videoEmbeddable=true&maxResults={maxResults}&q={q}&key={apiKey}";
+            var response = await GetJson<SearchResponse>(url);
+            UnitsUsedToday += SearchCost - 1; // GetJson already counted 1
+
+            var ranked = new List<(Song song, int score)>();
+            foreach (SearchItem item in response.items ?? Array.Empty<SearchItem>())
+            {
+                string id = item.id?.videoId;
+                if (string.IsNullOrEmpty(id) || item.snippet == null) continue;
+                // Search snippets come HTML-escaped (&amp;, &#39;).
+                string rawTitle = System.Net.WebUtility.HtmlDecode(item.snippet.title);
+                string channel = System.Net.WebUtility.HtmlDecode(item.snippet.channelTitle);
+                var (title, artist) = SongTitleParser.Parse(rawTitle, channel);
+                ranked.Add((new Song(id, title, artist, "YouTube", GetThumbnail(id), 0), SingAlongScore(rawTitle, channel)));
+            }
+
+            // Karaoke and lyric uploads first: they show the words on screen.
+            List<Song> songs = ranked.OrderByDescending(r => r.score).Select(r => r.song).ToList();
+            await AddDurationsAndFilter(songs);
+            return songs;
+        }
+
+        const int SearchCost = 100;
+
+        static int SingAlongScore(string title, string channel)
+        {
+            string text = $"{title} {channel}".ToLowerInvariant();
+            int score = 0;
+            if (text.Contains("karaoke") || text.Contains("instrumental") || text.Contains("sing king")) score += 3;
+            if (text.Contains("lyric")) score += 2;
+            if (text.Contains("live") || text.Contains("official video") || text.Contains("official music video") || text.Contains("performance")) score -= 3;
+            return score;
+        }
+
         /// <summary>16:9 thumbnail without letterbox bars (320x180).</summary>
         public string GetThumbnail(string videoId) => $"https://i.ytimg.com/vi/{videoId}/mqdefault.jpg";
 

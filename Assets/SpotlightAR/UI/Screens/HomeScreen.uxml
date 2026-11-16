@@ -32,6 +32,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement name="featured-dots" class="dots" />
+            <ui:Button name="search-online" class="search-online t-semibold">
+                <SpotlightAR.UI.Icon glyph="Search" />
+                <ui:Label name="search-online-label" text="Search YouTube" class="search-online__label" />
+            </ui:Button>
             <ui:VisualElement class="list-header">
                 <ui:Label name="list-title" text="Top this week" class="list-header__title heading--bold heading" />
                 <ui:Button name="see-all" text="See all" class="text-button t-semibold" />

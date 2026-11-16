@@ -143,7 +143,8 @@ namespace SpotlightAR.Songs.Playback
             "2" => "This video link is invalid.",
             "5" => "This video can't play on this phone.",
             "100" => "This video was removed or made private.",
-            "101" or "150" or "153" => "The uploader doesn't allow this video to play in other apps. Pick another song.",
+            "101" or "150" => "The uploader doesn't allow this video to play in other apps. Pick another song.",
+            "152" or "153" => "YouTube couldn't verify the app for this video. Pick another song or try again.",
             _ => $"The video couldn't play (error {code})."
         };
 

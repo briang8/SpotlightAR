@@ -30,6 +30,7 @@ namespace SpotlightAR.UI
         readonly Button seeAll;
         readonly VisualElement list;
         readonly Label status;
+        readonly Button searchOnline;
 
         readonly List<Button> chipButtons = new List<Button>();
         IReadOnlyList<Song> songs = Array.Empty<Song>();
@@ -40,6 +41,9 @@ namespace SpotlightAR.UI
         public event Action<string> GenreSelected;
         public event Action<string> SearchChanged;
         public event Action<Song> SongChosen;
+
+        /// <summary>The player asked to search all of YouTube for the current query.</summary>
+        public event Action<string> OnlineSearchRequested;
 
         public HomeScreen(VisualElement root, VisualTreeAsset rowTemplate) : base(root)
         {
@@ -56,6 +60,13 @@ namespace SpotlightAR.UI
             seeAll = Require<Button>("see-all");
             list = Require<VisualElement>("song-list");
             status = Require<Label>("home-status");
+            searchOnline = Require<Button>("search-online");
+            searchOnline.clicked += RequestOnlineSearch;
+            search.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter) RequestOnlineSearch();
+            });
+            searchOnline.style.display = DisplayStyle.None;
 
             search.textEdition.placeholder = "Search songs or artists";
             search.textEdition.hidePlaceholderOnFocus = true;
@@ -94,11 +105,40 @@ namespace SpotlightAR.UI
             foreach (Button chip in chipButtons) chip.EnableInClassList("chip--selected", Equals(chip.userData, genre));
         }
 
+        void RequestOnlineSearch()
+        {
+            string query = search.value?.Trim();
+            if (!string.IsNullOrEmpty(query)) OnlineSearchRequested?.Invoke(query);
+        }
+
+        public void ShowOnlineSearching(string query)
+        {
+            searching = true;
+            searchOnline.style.display = DisplayStyle.None;
+            SetFeaturedVisible(false);
+            listTitle.text = "Searching YouTube…";
+            SetStatus($"Looking for karaoke versions of “{query}”");
+            RenderSkeleton();
+        }
+
+        public void ShowOnlineResults(string query, IReadOnlyList<Song> results)
+        {
+            searching = true;
+            songs = results ?? Array.Empty<Song>();
+            expanded = true;
+            searchOnline.style.display = DisplayStyle.None;
+            SetFeaturedVisible(false);
+            listTitle.text = $"YouTube: “{query}”";
+            SetStatus(songs.Count == 0 ? "No karaoke versions found that can play in the app. Try the artist's name too." : null);
+            RenderList();
+        }
+
         public void ShowLoading()
         {
+            searchOnline.style.display = DisplayStyle.None;
             SetStatus("Loading songs…");
             songs = Array.Empty<Song>();
-            featured.style.display = DisplayStyle.None;
+            SetFeaturedVisible(false);
             RenderSkeleton();
         }
 
@@ -106,6 +146,7 @@ namespace SpotlightAR.UI
         public void ShowSongs(IReadOnlyList<Song> list, string note = null)
         {
             searching = false;
+            searchOnline.style.display = DisplayStyle.None;
             songs = list ?? Array.Empty<Song>();
             featuredIndex = 0;
             expanded = false;
@@ -120,16 +161,19 @@ namespace SpotlightAR.UI
             searching = true;
             songs = results ?? Array.Empty<Song>();
             expanded = true;
-            featured.style.display = DisplayStyle.None;
-            listTitle.text = songs.Count == 0 ? "No matches" : $"Results for “{query}”";
-            SetStatus(songs.Count == 0 ? "Try another song or artist from the playlists." : null);
+            SetFeaturedVisible(false);
+            listTitle.text = songs.Count == 0 ? "Not in the playlists" : $"In the playlists: “{query}”";
+            SetStatus(songs.Count == 0 ? "Search all of YouTube for a karaoke version instead." : null);
+            searchOnline.Q<Label>("search-online-label").text = $"Search YouTube for “{query}”";
+            searchOnline.style.display = DisplayStyle.Flex;
             RenderList();
         }
 
         public void ShowError(string message)
         {
+            searchOnline.style.display = DisplayStyle.None;
             songs = Array.Empty<Song>();
-            featured.style.display = DisplayStyle.None;
+            SetFeaturedVisible(false);
             list.Clear();
             seeAll.style.display = DisplayStyle.None;
             SetStatus(message);
@@ -141,10 +185,18 @@ namespace SpotlightAR.UI
             status.style.display = string.IsNullOrEmpty(message) ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
+        /// <summary>The featured card and its carousel dots always show and hide together.</summary>
+        void SetFeaturedVisible(bool visible)
+        {
+            DisplayStyle display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            featured.style.display = display;
+            featuredDots.style.display = display;
+        }
+
         void RenderFeatured()
         {
             bool show = !searching && songs.Count > 0;
-            featured.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            SetFeaturedVisible(show);
             if (!show) return;
 
             Song song = FeaturedSong;

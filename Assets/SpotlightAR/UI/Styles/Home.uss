@@ -262,6 +262,46 @@
     background-color: var(--c-text);
 }
 
+/* ---------- Search all of YouTube ---------- */
+
+.search-online {
+    flex-direction: row;
+    align-items: center;
+    height: 120px;
+    margin: 8px 0 0 0;
+    padding: 0 40px;
+    border-radius: 60px;
+    border-width: 3px;
+    border-color: var(--c-amber);
+    background-color: var(--c-amber-tint);
+}
+
+.search-online:hover,
+.search-online:focus {
+    border-color: var(--c-amber);
+    background-color: var(--c-amber-tint);
+}
+
+.search-online:active {
+    scale: 0.98 0.98;
+}
+
+.search-online .icon {
+    width: 46px;
+    height: 46px;
+    margin-right: 22px;
+    color: var(--c-amber);
+}
+
+.search-online__label {
+    flex-shrink: 1;
+    font-size: 36px;
+    color: var(--c-amber);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* ---------- Song list ---------- */
 
 .list-header {

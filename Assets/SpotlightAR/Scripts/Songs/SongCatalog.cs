@@ -122,6 +122,23 @@ namespace SpotlightAR.Songs
             return mix;
         }
 
+        readonly Dictionary<string, List<Song>> onlineSearches = new Dictionary<string, List<Song>>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Searches all of YouTube for karaoke versions (100 quota units per new query).
+        /// Repeated queries are answered from memory for free.
+        /// </summary>
+        public async Awaitable<List<Song>> SearchOnline(string text)
+        {
+            string query = text?.Trim() ?? string.Empty;
+            if (query.Length == 0) return new List<Song>();
+            if (onlineSearches.TryGetValue(query, out List<Song> cached)) return cached;
+
+            List<Song> results = await youTube.SearchKaraoke(query, 15);
+            onlineSearches[query] = results;
+            return results;
+        }
+
         /// <summary>Searches titles and artists across every loaded genre (no extra API cost).</summary>
         public List<Song> Search(string text)
         {

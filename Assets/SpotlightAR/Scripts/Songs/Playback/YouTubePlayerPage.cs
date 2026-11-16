@@ -5,11 +5,18 @@ namespace SpotlightAR.Songs.Playback
     /// Player API and reports state and time back to Unity through the plugin's
     /// <c>Unity.call</c> bridge ("ready", "state:N", "time:current:duration", "error:code").
     /// </summary>
+    /// <remarks>
+    /// YouTube's Required Minimum Functionality rules say an app must identify itself in the
+    /// HTTP Referer as https://&lt;app id&gt;. Loading the page with that base URL sets the Referer;
+    /// without it the player refuses to play (errors 152/153).
+    /// </remarks>
     static class YouTubePlayerPage
     {
-        public const string BaseUrl = "https://www.youtube.com/";
+        public static string BaseUrl => $"https://{UnityEngine.Application.identifier.ToLowerInvariant()}";
 
-        public static string Build(string videoId) => Template.Replace("{{VIDEO_ID}}", videoId);
+        public static string Build(string videoId) => Template
+            .Replace("{{VIDEO_ID}}", videoId)
+            .Replace("{{ORIGIN}}", BaseUrl);
 
         const string Template = @"<!DOCTYPE html>
 <html>
@@ -32,7 +39,7 @@ namespace SpotlightAR.Songs.Playback
   function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
       videoId: '{{VIDEO_ID}}',
-      playerVars: { playsinline: 1, autoplay: 1, controls: 1, rel: 0, modestbranding: 1, fs: 0, iv_load_policy: 3 },
+      playerVars: { playsinline: 1, autoplay: 1, controls: 1, rel: 0, fs: 0, iv_load_policy: 3, origin: '{{ORIGIN}}', widget_referrer: '{{ORIGIN}}' },
       events: {
         onReady: function () { send('ready'); player.playVideo(); },
         onStateChange: function (e) { send('state:' + e.data); },

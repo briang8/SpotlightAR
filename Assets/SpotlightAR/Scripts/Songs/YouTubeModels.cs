@@ -32,6 +32,32 @@ namespace SpotlightAR.Songs
     }
 
     [Serializable]
+    sealed class SearchResponse
+    {
+        public SearchItem[] items;
+    }
+
+    [Serializable]
+    sealed class SearchItem
+    {
+        public SearchId id;
+        public SearchSnippet snippet;
+    }
+
+    [Serializable]
+    sealed class SearchId
+    {
+        public string videoId;
+    }
+
+    [Serializable]
+    sealed class SearchSnippet
+    {
+        public string title;
+        public string channelTitle;
+    }
+
+    [Serializable]
     sealed class VideosResponse
     {
         public VideoItem[] items;
