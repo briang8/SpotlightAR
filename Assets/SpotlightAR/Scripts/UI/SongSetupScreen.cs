@@ -58,9 +58,34 @@ namespace SpotlightAR.UI
             nameField.textEdition.placeholder = "Spotlight";
             nameField.textEdition.hidePlaceholderOnFocus = true;
             nameField.RegisterValueChangedCallback(evt => StageNameChanged?.Invoke(evt.newValue));
+            BindModeSwitch();
         }
 
         readonly TextField nameField;
+        Button modeKaraoke;
+        Button modeSing;
+        Label modeCaption;
+
+        /// <summary>The player picked a mode: true = Sing mode (original song + synced lyrics), false = karaoke video.</summary>
+        public event Action<bool> ModeSelected;
+
+        void BindModeSwitch()
+        {
+            modeKaraoke = Require<Button>("mode-karaoke");
+            modeSing = Require<Button>("mode-sing");
+            modeCaption = Require<Label>("mode-caption");
+            modeKaraoke.clicked += () => ModeSelected?.Invoke(false);
+            modeSing.clicked += () => ModeSelected?.Invoke(true);
+        }
+
+        /// <summary>Shows which mode is selected, whether Sing mode can be picked, and a one-line explanation.</summary>
+        public void SetMode(bool singSelected, bool singAvailable, string caption)
+        {
+            modeKaraoke.EnableInClassList("segment--selected", !singSelected);
+            modeSing.EnableInClassList("segment--selected", singSelected);
+            modeSing.SetEnabled(singAvailable);
+            modeCaption.text = caption ?? string.Empty;
+        }
 
         public void SetStageName(string stageName) => nameField.SetValueWithoutNotify(stageName ?? string.Empty);
 

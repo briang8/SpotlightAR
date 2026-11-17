@@ -124,6 +124,9 @@ namespace SpotlightAR.Songs
 
         readonly Dictionary<string, List<Song>> onlineSearches = new Dictionary<string, List<Song>>(StringComparer.OrdinalIgnoreCase);
 
+        /// <summary>Sing mode: the original recording of a song, close to the given length (100 quota units).</summary>
+        public Awaitable<Song> FindOriginal(Song song, float targetSeconds) => youTube.FindOriginal(song, targetSeconds);
+
         /// <summary>
         /// Searches all of YouTube for karaoke versions (100 quota units per new query).
         /// Repeated queries are answered from memory for free.

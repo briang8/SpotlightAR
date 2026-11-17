@@ -44,6 +44,10 @@ namespace SpotlightAR.Songs.Playback
             SetState(PlaybackState.Idle);
         }
 
+        public void SeekBy(float seconds) => time = Mathf.Clamp(time + seconds, 0f, duration);
+
+        public void SetVolume(float volume) { } // nothing audible in the Editor stand-in
+
         public void SetViewport(Rect screenRect, bool visible) { }
 
         public void Tick(float deltaTime)

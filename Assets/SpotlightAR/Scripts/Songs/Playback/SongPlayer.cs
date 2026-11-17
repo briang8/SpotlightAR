@@ -59,6 +59,11 @@ namespace SpotlightAR.Songs.Playback
 
         public float GetTime() => backend.CurrentTime;
 
+        public void SeekBy(float seconds) => backend.SeekBy(seconds);
+
+        /// <summary>Song volume 0-1 (Sing mode turns the original down so the singer leads).</summary>
+        public void SetVolume(float volume) => backend.SetVolume(volume);
+
         public void SetViewport(Rect screenRect, bool visible) => backend.SetViewport(screenRect, visible);
 
         void OnBackendState(PlaybackState state)

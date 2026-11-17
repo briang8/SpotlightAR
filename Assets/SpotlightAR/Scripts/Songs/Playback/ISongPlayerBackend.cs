@@ -32,6 +32,12 @@ namespace SpotlightAR.Songs.Playback
         void Pause();
         void Stop();
 
+        /// <summary>Jump forward (positive) or back (negative) by this many seconds.</summary>
+        void SeekBy(float seconds);
+
+        /// <summary>Song volume, 0-1. Kept across songs.</summary>
+        void SetVolume(float volume);
+
         /// <summary>Where the video should appear, in screen pixels (origin top-left).</summary>
         void SetViewport(Rect screenRect, bool visible);
 

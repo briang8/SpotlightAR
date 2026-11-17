@@ -5,16 +5,21 @@ using UnityEngine.UIElements;
 namespace SpotlightAR.UI
 {
     /// <summary>
-    /// The heads-up display while singing: song pill, hype card, voice meter and
-    /// the four round controls (mic, move, pause, finale).
+    /// The heads-up display while singing: a slim song bar with score and hype on top,
+    /// the AR stage in the middle, then synced lyrics (Sing mode), the playback controls
+    /// and the YouTube player at the bottom.
     /// </summary>
     public sealed class SingingHud : UIScreen
     {
         const float MeterInterval = 0.07f;
+        static readonly CustomStyleProperty<Color> AccentStyle = new CustomStyleProperty<Color>("--lyric-sung");
 
         readonly Label songTitle;
-        readonly Label songTime;
+        readonly Label songSub;
+        readonly Label timeElapsed;
+        readonly Label timeTotal;
         readonly VisualElement progressFill;
+        readonly VisualElement scoreCard;
         readonly Label scoreLabel;
         readonly Label hypeLabel;
         readonly Label noticeLabel;
@@ -25,7 +30,16 @@ namespace SpotlightAR.UI
         readonly VisualElement playerSlot;
         readonly VisualElement playerCover;
         readonly Label playerCaption;
+        readonly VisualElement lyricsCard;
+        readonly Label lyricPrev;
+        readonly Label lyricNow;
+        readonly Label lyricNext;
+        readonly VisualElement volumeRow;
+        readonly Slider volumeSlider;
+        readonly Label volumeValue;
+        readonly Label volumeLabel;
 
+        string sungColor = "#8C1D40";
         float meterTimer;
         bool muted;
         bool paused;
@@ -36,12 +50,19 @@ namespace SpotlightAR.UI
         public event Action<bool> PauseToggled;
         /// <summary>The player wants to stop here and get results for what they sang.</summary>
         public event Action FinishRequested;
+        /// <summary>Jump back or forward in the song by this many seconds.</summary>
+        public event Action<float> SeekRequested;
+        /// <summary>Song volume chosen on the slider, 0-1.</summary>
+        public event Action<float> VolumeChanged;
 
         public SingingHud(VisualElement root) : base(root)
         {
             songTitle = Require<Label>("song-title");
-            songTime = Require<Label>("song-time");
+            songSub = Require<Label>("song-sub");
+            timeElapsed = Require<Label>("time-elapsed");
+            timeTotal = Require<Label>("time-total");
             progressFill = Require<VisualElement>("song-progress-fill");
+            scoreCard = Require<VisualElement>("score-card");
             scoreLabel = Require<Label>("score-label");
             hypeLabel = Require<Label>("hype-label");
             noticeLabel = Require<Label>("notice-label");
@@ -52,17 +73,46 @@ namespace SpotlightAR.UI
             playerSlot = Require<VisualElement>("player-slot");
             playerCover = Require<VisualElement>("player-cover");
             playerCaption = Require<Label>("player-caption");
+            lyricsCard = Require<VisualElement>("lyrics-card");
+            lyricPrev = Require<Label>("lyric-prev");
+            lyricNow = Require<Label>("lyric-now");
+            lyricNext = Require<Label>("lyric-next");
+            volumeRow = Require<VisualElement>("volume-row");
+            volumeSlider = Require<Slider>("volume-slider");
+            volumeValue = Require<Label>("volume-value");
+            volumeLabel = Require<Label>("volume-label");
 
             Require<Button>("close-button").clicked += () => CloseRequested?.Invoke();
             Require<Button>("move-button").clicked += () => MoveRequested?.Invoke();
             Require<Button>("finish-button").clicked += () => FinishRequested?.Invoke();
+            Require<Button>("rewind-button").clicked += () => SeekRequested?.Invoke(-10f);
+            Require<Button>("forward-button").clicked += () => SeekRequested?.Invoke(10f);
+            Require<Button>("volume-button").clicked += () => volumeRow.ToggleInClassList("volume-row--open");
             micButton.clicked += () => SetMuted(!muted, true);
             Require<Button>("pause-button").clicked += () => SetPaused(!paused, true);
 
+            volumeSlider.RegisterValueChangedCallback(evt =>
+            {
+                ShowVolume(evt.newValue / 100f);
+                VolumeChanged?.Invoke(evt.newValue / 100f);
+            });
+
+            // The sung part of the lyric is coloured with the theme accent (rich text needs a literal colour).
+            lyricNow.RegisterCallback<CustomStyleResolvedEvent>(evt =>
+            {
+                if (evt.customStyle.TryGetValue(AccentStyle, out Color accent)) sungColor = "#" + ColorUtility.ToHtmlStringRGB(accent);
+            });
+
             ShowNotice(null);
+            SetLyricsVisible(false);
         }
 
-        public void SetSong(string title) => songTitle.text = title;
+        /// <summary>Song title, and the mode underneath ("Sing mode" with synced lyrics, or "Karaoke video").</summary>
+        public void SetSong(string title, string subtitle = null)
+        {
+            songTitle.text = title;
+            songSub.text = subtitle ?? "Karaoke video";
+        }
 
         /// <summary>
         /// Reserve the video box. On the phone the native YouTube view is laid on top of it;
@@ -72,7 +122,7 @@ namespace SpotlightAR.UI
         {
             playerSlot.style.display = DisplayStyle.Flex;
             playerSlot.EnableInClassList("player-slot--simulated", !realVideo);
-            playerCaption.text = realVideo ? string.Empty : "The karaoke video plays here on the phone";
+            playerCaption.text = realVideo ? string.Empty : "The YouTube video plays here on the phone";
             playerCover.style.backgroundImage = StyleKeyword.None;
             if (!realVideo && song != null) CoverImages.Apply(playerCover, song.GetCoverUrl());
         }
@@ -82,10 +132,11 @@ namespace SpotlightAR.UI
         /// <summary>The video box in panel coordinates, or an empty rect while it is not laid out.</summary>
         public Rect PlayerPanelRect => playerSlot.resolvedStyle.display == DisplayStyle.None ? Rect.zero : playerSlot.worldBound;
 
-        /// <summary>Shows "elapsed / duration". A duration of 0 shows elapsed time only.</summary>
+        /// <summary>Shows elapsed and total time either side of the progress bar.</summary>
         public void SetTime(float elapsed, float duration)
         {
-            songTime.text = duration > 0f ? $"{Format(elapsed)} / {Format(duration)}" : Format(elapsed);
+            timeElapsed.text = Format(elapsed);
+            timeTotal.text = duration > 0f ? Format(duration) : "--:--";
             float progress = duration > 0f ? Mathf.Clamp01(elapsed / duration) : 0f;
             progressFill.style.width = Length.Percent(progress * 100f);
         }
@@ -94,17 +145,16 @@ namespace SpotlightAR.UI
 
         public void SetHype(int multiplier)
         {
-            hypeLabel.text = $"Crowd hype x{multiplier}";
-            hypeLabel.EnableInClassList("score-card__hype--x2", multiplier == 2);
-            hypeLabel.EnableInClassList("score-card__hype--x3", multiplier >= 3);
+            hypeLabel.text = $"x{multiplier}";
+            hypeLabel.EnableInClassList("hype-pill--x2", multiplier == 2);
+            hypeLabel.EnableInClassList("hype-pill--x3", multiplier >= 3);
         }
 
-        /// <summary>A quick bounce of the score card (milestones, hype changes).</summary>
+        /// <summary>A quick bounce of the score (milestones, hype changes).</summary>
         public void PulseScore()
         {
-            VisualElement card = scoreLabel.parent;
-            card.AddToClassList("score-card--pulse");
-            card.schedule.Execute(() => card.RemoveFromClassList("score-card--pulse")).ExecuteLater(180);
+            scoreCard.AddToClassList("score-card--pulse");
+            scoreCard.schedule.Execute(() => scoreCard.RemoveFromClassList("score-card--pulse")).ExecuteLater(180);
         }
 
         /// <summary>Feed the live loudness; the meter samples it at a steady rate.</summary>
@@ -131,14 +181,56 @@ namespace SpotlightAR.UI
             if (notify) PauseToggled?.Invoke(paused);
         }
 
-        /// <summary>Short message above the controls. Pass null to hide it.</summary>
+        /// <summary>Short message above the lyrics. Pass null to hide it.</summary>
         public void ShowNotice(string message)
         {
             noticeLabel.text = message ?? string.Empty;
             noticeLabel.style.display = string.IsNullOrEmpty(message) ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
-        protected override void OnShown() => meter.ClearLevels();
+        // ---------- Sing mode ----------
+
+        public void SetLyricsVisible(bool visible) => lyricsCard.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+
+        /// <summary>
+        /// Shows the previous, current and next lines. The part of the current line already
+        /// sung (by time) fills in with the accent colour, like a karaoke screen.
+        /// </summary>
+        public void SetLyrics(string previous, string current, float progress, string next)
+        {
+            lyricPrev.text = previous ?? string.Empty;
+            lyricNext.text = next ?? string.Empty;
+            current ??= string.Empty;
+
+            int split = Mathf.Clamp(Mathf.RoundToInt(current.Length * Mathf.Clamp01(progress)), 0, current.Length);
+            // Fill whole words so the colour change doesn't land mid-word.
+            while (split > 0 && split < current.Length && current[split] != ' ') split++;
+            string sung = Escape(current.Substring(0, split));
+            string rest = Escape(current.Substring(split));
+            lyricNow.text = split > 0 ? $"<color={sungColor}>{sung}</color>{rest}" : rest;
+        }
+
+        /// <summary>Sets the slider and labels without raising VolumeChanged.</summary>
+        public void SetVolume(float volume)
+        {
+            volumeSlider.SetValueWithoutNotify(Mathf.Round(Mathf.Clamp01(volume) * 100f));
+            ShowVolume(volume);
+        }
+
+        void ShowVolume(float volume)
+        {
+            string text = $"{Mathf.RoundToInt(Mathf.Clamp01(volume) * 100f)}%";
+            volumeValue.text = text;
+            volumeLabel.text = text;
+        }
+
+        protected override void OnShown()
+        {
+            meter.ClearLevels();
+            volumeRow.RemoveFromClassList("volume-row--open");
+        }
+
+        static string Escape(string text) => text.Replace("<", "‹"); // keep lyric text from being read as rich-text tags
 
         static string Format(float seconds)
         {

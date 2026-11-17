@@ -14,7 +14,8 @@ namespace SpotlightAR.Songs.Playback
     {
         public static string BaseUrl => $"https://{UnityEngine.Application.identifier.ToLowerInvariant()}";
 
-        public static string Build(string videoId) => Template
+        public static string Build(string videoId, float volume = 1f) => Template
+            .Replace("{{VOLUME}}", UnityEngine.Mathf.RoundToInt(UnityEngine.Mathf.Clamp01(volume) * 100f).ToString())
             .Replace("{{VIDEO_ID}}", videoId)
             .Replace("{{ORIGIN}}", BaseUrl);
 
@@ -23,7 +24,7 @@ namespace SpotlightAR.Songs.Playback
 <head>
 <meta name=""viewport"" content=""width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"">
 <style>
-  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0E0F16; overflow: hidden; }
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #0C0B0D; overflow: hidden; }
   #player { position: absolute; inset: 0; width: 100%; height: 100%; }
 </style>
 </head>
@@ -32,6 +33,10 @@ namespace SpotlightAR.Songs.Playback
 <script>
   function send(message) { if (window.Unity) { Unity.call(message); } }
   var player;
+  var pendingVolume = {{VOLUME}};
+  // Called from Unity: our own controls replace YouTube's, so the video can't be tapped by accident.
+  function seekBy(seconds) { if (player && player.getCurrentTime) { player.seekTo(Math.max(0, player.getCurrentTime() + seconds), true); } }
+  function setVol(volume) { pendingVolume = volume; if (player && player.setVolume) { player.setVolume(volume); } }
   var tag = document.createElement('script');
   tag.src = 'https://www.youtube.com/iframe_api';
   document.head.appendChild(tag);
@@ -39,9 +44,9 @@ namespace SpotlightAR.Songs.Playback
   function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
       videoId: '{{VIDEO_ID}}',
-      playerVars: { playsinline: 1, autoplay: 1, controls: 1, rel: 0, fs: 0, iv_load_policy: 3, origin: '{{ORIGIN}}', widget_referrer: '{{ORIGIN}}' },
+      playerVars: { playsinline: 1, autoplay: 1, controls: 0, disablekb: 1, rel: 0, fs: 0, iv_load_policy: 3, origin: '{{ORIGIN}}', widget_referrer: '{{ORIGIN}}' },
       events: {
-        onReady: function () { send('ready'); player.playVideo(); },
+        onReady: function () { send('ready'); player.setVolume(pendingVolume); player.playVideo(); },
         onStateChange: function (e) { send('state:' + e.data); },
         onError: function (e) { send('error:' + e.data); }
       }

@@ -1,4 +1,4 @@
-/* Screen layout for the placement screen and the singing HUD (screens_v2.png). */
+/* Screen layout: shared screen frame, placement, and the singing HUD. */
 
 .safe-area {
     flex-grow: 1;
@@ -27,7 +27,7 @@
 
 .screen-root {
     flex-grow: 1;
-    padding: 40px 44px 0 44px;
+    padding: 36px 52px 0 52px;
 }
 
 .top-bar {
@@ -43,15 +43,15 @@
 /* ---------- Placement ---------- */
 
 .hint-card {
-    margin: 52px 70px 0 70px;
-    padding: 36px 44px;
-    border-radius: 36px;
-    background-color: var(--c-surface);
+    margin: 48px 60px 0 60px;
+    padding: 40px 48px;
+    border-radius: 56px;
+    background-color: var(--c-overlay);
     align-items: center;
 }
 
 .hint-card__title {
-    font-size: 48px;
+    font-size: 50px;
     -unity-text-align: middle-center;
 }
 
@@ -64,11 +64,11 @@
 }
 
 .sheet {
-    margin: 0 -44px;
-    padding: 48px 48px 64px 48px;
-    border-top-left-radius: 56px;
-    border-top-right-radius: 56px;
-    background-color: var(--c-bg);
+    margin: 0 -52px;
+    padding: 52px 52px 64px 52px;
+    border-top-left-radius: 72px;
+    border-top-right-radius: 72px;
+    background-color: var(--c-surface);
 }
 
 .sheet__row {
@@ -82,39 +82,294 @@
     color: var(--c-muted);
 }
 
-/* ---------- Singing HUD ---------- */
+/* ---------- Singing HUD ----------
+   Slim bar on top, the stage in the middle, then lyrics, controls and the
+   YouTube player at the bottom. Everything over the camera is solid. */
 
-.song-pill {
-    flex-grow: 1;
-    margin-left: 28px;
-    padding: 24px 40px 26px 40px;
-    border-radius: 60px;
-    background-color: var(--c-surface);
+.hud {
+    padding-bottom: 40px;
 }
 
-.song-pill__row {
+.hud-bar {
     flex-direction: row;
-    justify-content: space-between;
+    align-items: center;
+    padding: 16px 22px 16px 16px;
+    border-radius: 72px;
+    background-color: var(--c-overlay);
+}
+
+.hud-bar__close,
+.hud-bar__close:hover,
+.hud-bar__close:focus {
+    border-width: 0;
+    background-color: var(--c-fill);
+}
+
+.hud-bar__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0 20px 0 24px;
+    overflow: hidden;
+}
+
+.hud-bar__title {
+    font-size: 38px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hud-bar__sub {
+    font-size: 28px;
+    color: var(--c-muted);
+}
+
+.score-card {
+    margin-right: 20px;
+    transition-property: scale;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out-back;
+}
+
+.score-card--pulse {
+    scale: 1.12 1.12;
+}
+
+.score-card__score {
+    font-size: 60px;
+    -unity-text-align: middle-right;
+}
+
+.hype-pill {
+    padding: 14px 24px;
+    border-radius: 40px;
+    background-color: var(--c-fill);
+    color: var(--c-text);
+    font-size: 32px;
+    -unity-text-align: middle-center;
+}
+
+.hype-pill--x2 {
+    background-color: var(--c-hi-tint);
+    color: var(--c-hi);
+}
+
+.hype-pill--x3 {
+    background-color: var(--c-hi);
+    color: var(--c-on-accent);
+}
+
+.timeline {
+    flex-direction: row;
+    align-items: center;
+    margin: 22px 12px 0 12px;
+}
+
+.timeline__time {
+    font-size: 28px;
+    color: #FFFFFF;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.timeline__bar {
+    flex-grow: 1;
+    margin: 0 22px;
+    background-color: rgba(255, 255, 255, 0.35);
+}
+
+.hud-middle {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.side-rail > .round-button {
+    margin: 14px 0;
+}
+
+.notice {
+    align-self: center;
+    max-width: 920px;
+    margin-bottom: 20px;
+    padding: 20px 34px;
+    border-radius: 40px;
+    background-color: var(--c-text);
+    color: var(--c-bg);
+    font-size: 32px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.lyrics {
+    padding: 30px 40px;
+    border-radius: 56px;
+    background-color: var(--c-overlay);
     align-items: center;
 }
 
-.song-pill__title {
-    font-size: 36px;
-}
-
-.song-pill__time {
+.lyrics__dim {
     font-size: 32px;
     color: var(--c-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.lyrics__now {
+    margin: 10px 0;
+    font-size: 52px;
+    color: var(--c-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.volume-row {
+    display: none;
+    flex-direction: row;
+    align-items: center;
+    margin-top: 18px;
+    padding: 18px 36px;
+    border-radius: 60px;
+    background-color: var(--c-overlay);
+}
+
+.volume-row--open {
+    display: flex;
+}
+
+.volume-row__label {
+    font-size: 30px;
+}
+
+.volume-row__value {
+    width: 100px;
+    font-size: 30px;
+    -unity-text-align: middle-right;
+}
+
+.volume-slider {
+    flex-grow: 1;
+    margin: 0 28px;
+}
+
+.volume-slider #unity-tracker {
+    height: 10px;
+    margin-top: -5px;
+    border-width: 0;
+    border-radius: 5px;
+    background-color: var(--c-fill);
+}
+
+.volume-slider #unity-dragger {
+    width: 56px;
+    height: 56px;
+    margin-top: -28px;
+    border-width: 0;
+    border-radius: 28px;
+    background-color: var(--c-accent);
+}
+
+.volume-slider #unity-dragger-border {
+    display: none;
+}
+
+.controls {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 18px;
+    padding: 14px;
+    border-radius: 72px;
+    background-color: var(--c-overlay);
+}
+
+.ctrl {
+    width: 112px;
+    height: 112px;
+    margin: 0 4px;
+    padding: 0;
+    border-radius: 56px;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    align-items: center;
+    justify-content: center;
+    transition-property: scale;
+    transition-duration: 0.12s;
+}
+
+.ctrl:hover,
+.ctrl:focus {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.ctrl:active {
+    scale: 0.9 0.9;
+}
+
+.ctrl .icon {
+    width: 64px;
+    height: 64px;
+    color: var(--c-text);
+}
+
+.ctrl__num {
+    position: absolute;
+    font-size: 21px;
+    color: var(--c-text);
+    -unity-text-align: middle-center;
+    left: 0;
+    right: 0;
+    top: 41px;
+}
+
+.ctrl--primary,
+.ctrl--primary:hover,
+.ctrl--primary:focus {
+    background-color: var(--c-accent);
+}
+
+.ctrl--primary .icon {
+    width: 50px;
+    height: 50px;
+    color: var(--c-on-accent);
+}
+
+.ctrl--done,
+.ctrl--done:hover,
+.ctrl--done:focus {
+    background-color: var(--c-green);
+}
+
+.ctrl--done .icon {
+    color: var(--c-on-green);
+}
+
+.ctrl--wide {
+    width: auto;
+    flex-direction: row;
+    padding: 0 20px;
+}
+
+.ctrl--wide .icon {
+    width: 50px;
+    height: 50px;
+}
+
+.ctrl__label {
+    margin-left: 8px;
+    font-size: 30px;
+}
+
+.controls__meter {
+    flex-grow: 1;
+    height: 56px;
+    margin: 0 12px;
 }
 
 .player-slot {
     display: none;
-    width: 720px;
-    height: 405px;
-    align-self: center;
-    margin-top: 28px;
-    border-radius: 28px;
-    background-color: #000000;
+    height: 540px;
+    margin-top: 18px;
+    border-radius: 44px;
+    background-color: var(--c-video);
     overflow: hidden;
     justify-content: flex-end;
 }
@@ -132,70 +387,8 @@
     margin: 0;
     padding: 18px 24px;
     font-size: 28px;
-    color: var(--c-text);
-    background-color: rgba(14, 15, 22, 0.8);
+    color: #FFFFFF;
+    background-color: rgba(12, 11, 13, 0.8);
     -unity-text-align: middle-center;
     white-space: normal;
-}
-
-.hype-row {
-    flex-direction: row;
-    justify-content: flex-end;
-    margin-top: 40px;
-}
-
-.score-card {
-    padding: 22px 36px;
-    border-radius: 32px;
-    background-color: var(--c-surface);
-    align-items: flex-end;
-}
-
-.score-card__score {
-    font-size: 66px;
-}
-
-.score-card__hype {
-    font-size: 32px;
-    color: var(--c-green);
-}
-
-.notice {
-    align-self: center;
-    max-width: 900px;
-    margin-bottom: 24px;
-    padding: 18px 32px;
-    border-radius: 24px;
-    background-color: rgba(70, 22, 26, 0.92);
-    font-size: 32px;
-    white-space: normal;
-    -unity-text-align: middle-center;
-}
-
-.hud-panel {
-    margin: 0 -44px;
-    padding: 40px 52px 60px 52px;
-    border-top-left-radius: 56px;
-    border-top-right-radius: 56px;
-    background-color: var(--c-bg);
-}
-
-.hud-panel__meter-row {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 36px;
-}
-
-.hud-panel__caption {
-    width: 130px;
-    font-size: 32px;
-    color: var(--c-muted);
-    white-space: normal;
-}
-
-.controls {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 16px;
 }

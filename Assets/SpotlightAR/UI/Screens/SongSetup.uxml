@@ -20,10 +20,18 @@
             <ui:VisualElement name="stage-list" class="stage-list" />
             <ui:Label text="Name your stage" class="field-label t-medium" />
             <ui:TextField name="stage-name-field" max-length="16" class="name-field" />
+            <ui:Label text="How do you want to sing?" class="section-title heading heading--bold" />
+            <ui:VisualElement class="segmented mode-switch">
+                <ui:Button name="mode-karaoke" text="Karaoke video" class="segment segment--selected t-medium" />
+                <ui:Button name="mode-sing" text="Sing mode" class="segment t-medium" />
+            </ui:VisualElement>
+            <ui:Label name="mode-caption" text="Looking for synced lyrics…" class="mode-caption" />
             <ui:Label text="Mic check" class="section-title heading heading--bold" />
             <ui:VisualElement name="mic-panel" class="mic-panel">
                 <ui:VisualElement class="mic-panel__row">
-                    <ui:VisualElement class="mic-panel__dot" />
+                    <ui:VisualElement class="mic-panel__badge">
+                        <SpotlightAR.UI.Icon glyph="Mic" class="mic-panel__icon" />
+                    </ui:VisualElement>
                     <ui:Label name="mic-status" text="Mic check: sing a line" class="mic-panel__status t-semibold" />
                 </ui:VisualElement>
                 <SpotlightAR.UI.VoiceMeter name="setup-meter" bar-count="34" class="mic-panel__meter" />

@@ -60,6 +60,21 @@ namespace SpotlightAR.Core
 
         const string StageNameKey = "stage_name";
 
+        // Sing mode: the original song quietly underneath time-synced lyrics.
+        SingModeService singMode;
+        SyncedLyrics singLyrics;
+        Song singOriginal;
+        bool singSelected;
+        const float DefaultSingVolume = 0.45f;
+        const string KaraokeCaption = "The karaoke version, with the lyrics in the video.";
+        const string SingCaption = "The original song plays quietly as your guide, with lyrics that fill in as you go.";
+
+        /// <summary>The video actually playing: the original recording in Sing mode, otherwise the karaoke video.</summary>
+        Song PlayingSong => singSelected && singOriginal != null ? singOriginal : SelectedSong;
+
+        string VolumeKey => singSelected ? "sing_volume" : "karaoke_volume";
+        float SongVolume => PlayerPrefs.GetFloat(VolumeKey, singSelected ? DefaultSingVolume : 1f);
+
         public GameState State { get; private set; } = GameState.Home;
         public Song SelectedSong { get; private set; }
 
@@ -72,6 +87,7 @@ namespace SpotlightAR.Core
             score = new ScoreManager(scoring);
             profile = new PlayerProfile();
             songData = new SongDataService();
+            singMode = new SingModeService(catalog.FindOriginal);
         }
 
         void Start()
@@ -122,6 +138,7 @@ namespace SpotlightAR.Core
             setup.StageSelected += SelectStage;
             setup.ContinueRequested += EnterPlacing;
             setup.RecheckRequested += () => speakerCheck.Run();
+            setup.ModeSelected += SelectMode;
 
             stageName = PlayerPrefs.GetString(StageNameKey, string.Empty);
             setup.SetStageName(stageName);
@@ -154,6 +171,12 @@ namespace SpotlightAR.Core
             hud.MicToggled += muted => mic.Muted = muted;
             hud.PauseToggled += SetPaused;
             hud.FinishRequested += () => EndSession(completed: true);
+            hud.SeekRequested += seconds => songPlayer.SeekBy(seconds);
+            hud.VolumeChanged += volume =>
+            {
+                PlayerPrefs.SetFloat(VolumeKey, volume);
+                songPlayer.SetVolume(volume);
+            };
         }
 
         void WireResults()
@@ -228,6 +251,7 @@ namespace SpotlightAR.Core
             mic.StartListening();
             ui.Setup.SetSong(SelectedSong);
             LookUpSongData(SelectedSong);
+            LookUpLyrics(SelectedSong);
             SelectStage(Mathf.Clamp(selectedStage, 0, Mathf.Max(0, stageThemes.Count - 1)));
             ui.Show(ui.Setup);
             SetState(GameState.SongSetup);
@@ -255,7 +279,7 @@ namespace SpotlightAR.Core
         public void StartSession()
         {
             if (!stagePlacer.ConfirmPlacement()) return;
-            bool resuming = songPlayer.Current != null && songPlayer.Current == SelectedSong && State == GameState.Placing && score.Score > 0;
+            bool resuming = songPlayer.Current != null && songPlayer.Current == PlayingSong && State == GameState.Placing && score.Score > 0;
             BeginPerformance(restart: !resuming);
         }
 
@@ -266,7 +290,8 @@ namespace SpotlightAR.Core
 
             if (restart)
             {
-                songPlayer.Play(SelectedSong);
+                songPlayer.SetVolume(SongVolume);
+                songPlayer.Play(PlayingSong);
                 score.Begin(currentInsights, StyleFor(SelectedSong));
                 stagePlacer.Placed?.SetHype(1);
                 ui.Hud.SetScore(0);
@@ -278,7 +303,10 @@ namespace SpotlightAR.Core
                 songPlayer.Resume();
             }
 
-            ui.Hud.SetSong(SelectedSong.title);
+            bool lyricsOn = singSelected && singLyrics != null;
+            ui.Hud.SetSong(SelectedSong.title, lyricsOn ? "Sing mode" : "Karaoke video");
+            ui.Hud.SetLyricsVisible(lyricsOn);
+            ui.Hud.SetVolume(SongVolume);
             ui.Hud.ShowPlayer(SelectedSong, songPlayer.ShowsVideo);
             ui.Hud.SetPaused(false);
             ui.Hud.SetMuted(mic.Muted);
@@ -390,6 +418,12 @@ namespace SpotlightAR.Core
             ui.Hud.Tick(loudness, Time.deltaTime);
             ui.Hud.SetTime(songPlayer.GetTime(), songPlayer.Duration);
 
+            if (singSelected && singLyrics != null)
+            {
+                singLyrics.Get(songPlayer.GetTime(), out string previous, out string current, out float progress, out string next);
+                ui.Hud.SetLyrics(previous, current, progress, next);
+            }
+
             bool showVideo = State == GameState.Singing || State == GameState.Paused;
             songPlayer.SetViewport(ui.PanelToScreen(ui.Hud.PlayerPanelRect), showVideo);
         }
@@ -474,6 +508,62 @@ namespace SpotlightAR.Core
 
         static ScoreStyle StyleFor(Song song) =>
             string.Equals(song.genre, "Rap", StringComparison.OrdinalIgnoreCase) ? ScoreStyle.Rap : ScoreStyle.Singing;
+
+        /// <summary>Checks for synced lyrics (free, cached). Sing mode can only be picked when they exist.</summary>
+        async void LookUpLyrics(Song song)
+        {
+            singSelected = false;
+            singLyrics = null;
+            singOriginal = null;
+            ui.Setup.SetMode(false, false, "Looking for synced lyrics for Sing mode…");
+
+            SyncedLyrics lyrics = await singMode.GetLyrics(song);
+            if (SelectedSong != song) return; // the player picked another song meanwhile
+            singLyrics = lyrics;
+            ui.Setup.SetMode(false, lyrics != null, lyrics != null
+                ? KaraokeCaption
+                : "Sing mode needs synced lyrics, and we couldn't find them for this song.");
+        }
+
+        /// <summary>
+        /// Karaoke video or Sing mode. Sing mode finds the original recording on YouTube the
+        /// first time (one search, then cached), and falls back to karaoke if it can't.
+        /// </summary>
+        async void SelectMode(bool sing)
+        {
+            Song song = SelectedSong;
+            if (song == null) return;
+            if (!sing || singLyrics == null)
+            {
+                singSelected = false;
+                ui.Setup.SetMode(false, singLyrics != null, singLyrics != null ? KaraokeCaption : null);
+                return;
+            }
+
+            ui.Setup.SetMode(true, true, "Finding the original song…");
+            Song original;
+            try
+            {
+                original = await singMode.GetOriginal(song);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[GameManager] Sing mode: {e.Message}");
+                if (SelectedSong == song) ui.Setup.SetMode(false, true, "Sing mode can't search YouTube right now. Check your connection and try again.");
+                return;
+            }
+            if (SelectedSong != song) return;
+
+            if (original == null)
+            {
+                singSelected = false;
+                ui.Setup.SetMode(false, true, "We couldn't find the original recording with matching timing, so this one is karaoke only.");
+                return;
+            }
+            singOriginal = original;
+            singSelected = true;
+            ui.Setup.SetMode(true, true, SingCaption);
+        }
 
         /// <summary>Fetch tempo and key for the song (cached after the first time) and show them on setup.</summary>
         async void LookUpSongData(Song song)

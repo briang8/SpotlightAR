@@ -21,6 +21,7 @@ namespace SpotlightAR.Songs.Playback
         float duration;
         float loadingFor;
         bool ready;
+        float volume = 1f;
 
         public event Action<PlaybackState> StateChanged;
         public event Action<string> Failed;
@@ -51,7 +52,7 @@ namespace SpotlightAR.Songs.Playback
             duration = song.durationSeconds;
             loadingFor = 0f;
             SetState(PlaybackState.Loading);
-            webView.LoadHTML(YouTubePlayerPage.Build(song.videoId), YouTubePlayerPage.BaseUrl);
+            webView.LoadHTML(YouTubePlayerPage.Build(song.videoId, volume), YouTubePlayerPage.BaseUrl);
         }
 
         public void Play()
@@ -62,6 +63,19 @@ namespace SpotlightAR.Songs.Playback
         public void Pause()
         {
             if (ready) webView.EvaluateJS("player.pauseVideo();");
+        }
+
+        public void SeekBy(float seconds)
+        {
+            if (!ready) return;
+            webView.EvaluateJS($"seekBy({seconds.ToString(System.Globalization.CultureInfo.InvariantCulture)});");
+            currentTime = Mathf.Clamp(currentTime + seconds, 0f, duration > 0f ? duration : float.MaxValue);
+        }
+
+        public void SetVolume(float value)
+        {
+            volume = Mathf.Clamp01(value);
+            if (ready) webView.EvaluateJS($"setVol({Mathf.RoundToInt(volume * 100f)});");
         }
 
         public void Stop()

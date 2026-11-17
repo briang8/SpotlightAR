@@ -110,6 +110,64 @@ namespace SpotlightAR.Songs
             return songs;
         }
 
+        /// <summary>
+        /// Sing mode: finds the original recording (with vocals) of a song, preferring the
+        /// album audio ("Artist - Topic" channels and "official audio" uploads) because its
+        /// timing matches synced lyrics. When the lyrics' length is known, the video must
+        /// be within a few seconds of it. Returns null if nothing suitable is found.
+        /// Costs 100 quota units (plus 1), so callers should cache the answer.
+        /// </summary>
+        public async Awaitable<Song> FindOriginal(Song song, float targetSeconds)
+        {
+            if (!HasKey) throw new InvalidOperationException("YouTube API key missing.");
+            if (UnitsUsedToday + SearchCost + 1 > DailyQuota) throw new InvalidOperationException("Daily YouTube search limit reached. Try again tomorrow.");
+
+            string q = Uri.EscapeDataString($"{song.artist} {song.title} official audio".Trim());
+            string url = $"{BaseUrl}search?part=snippet&type=video&videoEmbeddable=true&maxResults=8&q={q}&key={apiKey}";
+            var response = await GetJson<SearchResponse>(url);
+            UnitsUsedToday += SearchCost - 1;
+
+            var candidates = new List<(Song song, int score)>();
+            foreach (SearchItem item in response.items ?? Array.Empty<SearchItem>())
+            {
+                string id = item.id?.videoId;
+                if (string.IsNullOrEmpty(id) || item.snippet == null) continue;
+                string rawTitle = System.Net.WebUtility.HtmlDecode(item.snippet.title);
+                string channel = System.Net.WebUtility.HtmlDecode(item.snippet.channelTitle);
+                int score = OriginalScore(rawTitle, channel, song);
+                if (score <= -5) continue; // karaoke, covers, remixes, live versions
+                candidates.Add((new Song(id, song.title, song.artist, song.genre, song.coverUrl, 0), score));
+            }
+
+            List<Song> songs = candidates.Select(c => c.song).ToList();
+            await AddDurationsAndFilter(songs);
+
+            Song best = null;
+            float bestRank = float.MinValue;
+            foreach ((Song candidate, int score) in candidates)
+            {
+                if (!songs.Contains(candidate)) continue;
+                float off = targetSeconds > 0f ? Mathf.Abs(candidate.durationSeconds - targetSeconds) : 0f;
+                if (targetSeconds > 0f && off > 6f) continue; // a different edit would put the lyrics out of sync
+                float rank = score - off * 0.5f;
+                if (rank > bestRank) { best = candidate; bestRank = rank; }
+            }
+            return best;
+        }
+
+        static int OriginalScore(string title, string channel, Song song)
+        {
+            string text = $"{title} {channel}".ToLowerInvariant();
+            int score = 0;
+            if (channel.EndsWith(" - Topic", StringComparison.OrdinalIgnoreCase)) score += 5; // album audio
+            if (text.Contains("official audio")) score += 4;
+            else if (text.Contains("audio")) score += 2;
+            if (!string.IsNullOrEmpty(song.artist) && text.Contains(song.artist.ToLowerInvariant())) score += 2;
+            string[] wrong = { "karaoke", "instrumental", "cover", "remix", "live", "sped up", "slowed", "reverb", "8d", "acapella", "lyrics only" };
+            foreach (string word in wrong) if (text.Contains(word)) score -= 6;
+            return score;
+        }
+
         const int SearchCost = 100;
 
         static int SingAlongScore(string title, string channel)

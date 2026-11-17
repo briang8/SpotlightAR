@@ -1,50 +1,70 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <ui:VisualElement name="hud-root" class="screen-root" picking-mode="Ignore">
-        <ui:VisualElement class="top-bar" picking-mode="Ignore">
-            <ui:Button name="close-button" class="round-button round-button--small">
+    <ui:VisualElement name="hud-root" class="screen-root hud" picking-mode="Ignore">
+        <ui:VisualElement class="hud-bar">
+            <ui:Button name="close-button" class="round-button round-button--small hud-bar__close">
                 <SpotlightAR.UI.Icon glyph="Close" />
             </ui:Button>
-            <ui:VisualElement name="song-pill" class="song-pill">
-                <ui:VisualElement class="song-pill__row">
-                    <ui:Label name="song-title" text="Warm-up" class="song-pill__title t-semibold" />
-                    <ui:Label name="song-time" text="0:00" class="song-pill__time" />
-                </ui:VisualElement>
-                <ui:VisualElement class="progress">
-                    <ui:VisualElement name="song-progress-fill" class="progress__fill" />
-                </ui:VisualElement>
+            <ui:VisualElement class="hud-bar__text" picking-mode="Ignore">
+                <ui:Label name="song-title" text="Warm-up" class="hud-bar__title t-semibold" />
+                <ui:Label name="song-sub" text="Karaoke" class="hud-bar__sub" />
             </ui:VisualElement>
+            <ui:VisualElement name="score-card" class="score-card" picking-mode="Ignore">
+                <ui:Label name="score-label" text="0" class="score-card__score heading" />
+            </ui:VisualElement>
+            <ui:Label name="hype-label" text="x1" class="hype-pill t-bold" />
+        </ui:VisualElement>
+        <ui:VisualElement class="timeline" picking-mode="Ignore">
+            <ui:Label name="time-elapsed" text="0:00" class="timeline__time t-semibold" />
+            <ui:VisualElement class="progress timeline__bar">
+                <ui:VisualElement name="song-progress-fill" class="progress__fill" />
+            </ui:VisualElement>
+            <ui:Label name="time-total" text="0:00" class="timeline__time t-semibold" />
+        </ui:VisualElement>
+        <ui:VisualElement class="hud-middle" picking-mode="Ignore">
+            <ui:VisualElement class="side-rail">
+                <ui:Button name="move-button" class="round-button round-button--small round-button--overlay" tooltip="Move the stage">
+                    <SpotlightAR.UI.Icon glyph="Move" />
+                </ui:Button>
+                <ui:Button name="mic-button" class="round-button round-button--small round-button--overlay" tooltip="Mute the mic">
+                    <SpotlightAR.UI.Icon name="mic-icon" glyph="Mic" />
+                </ui:Button>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="notice-label" class="notice" />
+        <ui:VisualElement name="lyrics-card" class="lyrics" picking-mode="Ignore">
+            <ui:Label name="lyric-prev" class="lyrics__dim" />
+            <ui:Label name="lyric-now" enable-rich-text="true" class="lyrics__now heading--bold" />
+            <ui:Label name="lyric-next" class="lyrics__dim" />
+        </ui:VisualElement>
+        <ui:VisualElement name="volume-row" class="volume-row">
+            <ui:Label text="Song volume" class="volume-row__label t-semibold" />
+            <ui:Slider name="volume-slider" low-value="0" high-value="100" value="45" class="volume-slider" />
+            <ui:Label name="volume-value" text="45%" class="volume-row__value t-semibold" />
+        </ui:VisualElement>
+        <ui:VisualElement class="controls">
+            <ui:Button name="rewind-button" class="ctrl" tooltip="Back 10 seconds">
+                <SpotlightAR.UI.Icon glyph="Rewind" />
+                <ui:Label text="10" class="ctrl__num t-bold" />
+            </ui:Button>
+            <ui:Button name="pause-button" class="ctrl ctrl--primary">
+                <SpotlightAR.UI.Icon name="pause-icon" glyph="Pause" />
+            </ui:Button>
+            <ui:Button name="forward-button" class="ctrl" tooltip="Forward 10 seconds">
+                <SpotlightAR.UI.Icon glyph="Forward" />
+                <ui:Label text="10" class="ctrl__num t-bold" />
+            </ui:Button>
+            <SpotlightAR.UI.VoiceMeter name="voice-meter" bar-count="16" class="controls__meter" />
+            <ui:Button name="volume-button" class="ctrl ctrl--wide" tooltip="Song volume">
+                <SpotlightAR.UI.Icon glyph="Volume" />
+                <ui:Label name="volume-label" text="100%" class="ctrl__label t-semibold" />
+            </ui:Button>
+            <ui:Button name="finish-button" class="ctrl ctrl--done" tooltip="Finish here">
+                <SpotlightAR.UI.Icon glyph="Check" />
+            </ui:Button>
         </ui:VisualElement>
         <ui:VisualElement name="player-slot" class="player-slot" picking-mode="Ignore">
             <ui:VisualElement name="player-cover" class="player-slot__cover cover" picking-mode="Ignore" />
             <ui:Label name="player-caption" class="player-slot__caption t-medium" picking-mode="Ignore" />
-        </ui:VisualElement>
-        <ui:VisualElement class="hype-row" picking-mode="Ignore">
-            <ui:VisualElement name="score-card" class="score-card">
-                <ui:Label name="score-label" text="0" class="score-card__score heading" />
-                <ui:Label name="hype-label" text="Crowd hype x1" class="score-card__hype t-medium" />
-            </ui:VisualElement>
-        </ui:VisualElement>
-        <ui:VisualElement class="spacer" picking-mode="Ignore" />
-        <ui:Label name="notice-label" class="notice" />
-        <ui:VisualElement name="hud-panel" class="hud-panel">
-            <ui:VisualElement class="hud-panel__meter-row">
-                <ui:Label text="Your&#10;voice" class="hud-panel__caption" />
-                <SpotlightAR.UI.VoiceMeter name="voice-meter" bar-count="30" />
-            </ui:VisualElement>
-            <ui:VisualElement class="controls">
-                <ui:Button name="mic-button" class="round-button">
-                    <SpotlightAR.UI.Icon name="mic-icon" glyph="Mic" />
-                </ui:Button>
-                <ui:Button name="move-button" class="round-button">
-                    <SpotlightAR.UI.Icon glyph="Move" />
-                </ui:Button>
-                <ui:Button name="pause-button" class="round-button round-button--primary">
-                    <SpotlightAR.UI.Icon name="pause-icon" glyph="Pause" />
-                </ui:Button>
-                <ui:Button name="finish-button" class="round-button" tooltip="Finish here">
-                    <SpotlightAR.UI.Icon glyph="Check" />
-                </ui:Button>
-            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>
