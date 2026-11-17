@@ -30,11 +30,21 @@ namespace SpotlightAR.UI
         [UxmlAttribute] public Color LoudColor { get; set; } = new Color(1f, 0.71f, 0.28f);
         [UxmlAttribute] public float LoudThreshold { get; set; } = 0.7f;
 
+        // Theme colours from USS (--meter-quiet / --meter-loud), so the meter follows light and dark mode.
+        static readonly CustomStyleProperty<Color> QuietStyle = new CustomStyleProperty<Color>("--meter-quiet");
+        static readonly CustomStyleProperty<Color> LoudStyle = new CustomStyleProperty<Color>("--meter-loud");
+
         public VoiceMeter()
         {
             AddToClassList("voice-meter");
             pickingMode = PickingMode.Ignore;
             generateVisualContent += Draw;
+            RegisterCallback<CustomStyleResolvedEvent>(evt =>
+            {
+                if (evt.customStyle.TryGetValue(QuietStyle, out Color quiet)) QuietColor = quiet;
+                if (evt.customStyle.TryGetValue(LoudStyle, out Color loud)) LoudColor = loud;
+                MarkDirtyRepaint();
+            });
         }
 
         public void Push(float level)

@@ -45,6 +45,14 @@ namespace SpotlightAR.UI
         /// <summary>The player asked to search all of YouTube for the current query.</summary>
         public event Action<string> OnlineSearchRequested;
 
+        /// <summary>The moon/sun button: switch between light and dark mode.</summary>
+        public event Action ThemeToggleRequested;
+
+        readonly Icon themeIcon;
+
+        /// <summary>Shows a sun in dark mode (tap for light) and a moon in light mode.</summary>
+        public void SetDarkMode(bool dark) => themeIcon.Glyph = dark ? IconGlyph.Sun : IconGlyph.Moon;
+
         public HomeScreen(VisualElement root, VisualTreeAsset rowTemplate) : base(root)
         {
             this.rowTemplate = rowTemplate;
@@ -73,7 +81,8 @@ namespace SpotlightAR.UI
             search.RegisterValueChangedCallback(evt => SearchChanged?.Invoke(evt.newValue));
             seeAll.clicked += () => { expanded = !expanded; RenderList(); };
             Require<Button>("featured-sing").clicked += () => { if (FeaturedSong != null) SongChosen?.Invoke(FeaturedSong); };
-            Require<Button>("nav-sing").clicked += () => { if (FeaturedSong != null) SongChosen?.Invoke(FeaturedSong); };
+            themeIcon = Require<Icon>("theme-icon");
+            Require<Button>("theme-button").clicked += () => ThemeToggleRequested?.Invoke();
 
             Root.schedule.Execute(AdvanceFeatured).Every(FeaturedIntervalMs);
         }

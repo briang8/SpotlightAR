@@ -2,12 +2,12 @@
     <ui:VisualElement name="home-root" class="screen-root screen-root--opaque home">
         <ui:VisualElement class="home__header">
             <ui:VisualElement class="home__titles">
-                <ui:Label name="greeting" text="Friday night" class="home__greeting t-medium" />
-                <ui:Label text="Ready to sing?" class="home__title heading" />
+                <ui:Label name="greeting" text="Good evening" class="home__greeting t-semibold" />
+                <ui:Label text="What are we singing?" class="home__title heading" />
             </ui:VisualElement>
-            <ui:VisualElement class="avatar">
-                <SpotlightAR.UI.Icon glyph="Star" />
-            </ui:VisualElement>
+            <ui:Button name="theme-button" class="round-button round-button--small home__theme" tooltip="Light or dark mode">
+                <SpotlightAR.UI.Icon name="theme-icon" glyph="Moon" />
+            </ui:Button>
         </ui:VisualElement>
         <ui:VisualElement class="search">
             <SpotlightAR.UI.Icon glyph="Search" class="search__icon" />
@@ -17,17 +17,13 @@
         <ui:ScrollView name="home-scroll" vertical-scroller-visibility="Hidden" horizontal-scroller-visibility="Hidden" class="home__scroll">
             <ui:VisualElement name="featured-card" class="featured">
                 <ui:VisualElement name="featured-cover" class="featured__cover cover" />
-                <ui:VisualElement class="featured__badge">
-                    <ui:VisualElement class="featured__badge-dot" />
-                    <ui:Label text="NUMBER 1 TODAY" class="featured__badge-text t-bold" />
-                </ui:VisualElement>
                 <ui:VisualElement class="featured__info">
-                    <ui:VisualElement class="featured__text">
-                        <ui:Label name="featured-title" text="Golden Hour Drive" class="featured__title heading" />
-                        <ui:Label name="featured-meta" text="The Lantern Kids · 3:42 · Pop" class="featured__meta" />
-                    </ui:VisualElement>
-                    <ui:Button name="featured-sing" class="round-button round-button--primary featured__sing">
+                    <ui:Label text="TONIGHT'S PICK" class="featured__badge t-caps" />
+                    <ui:Label name="featured-title" text="Golden Hour Drive" class="featured__title heading" />
+                    <ui:Label name="featured-meta" text="The Lantern Kids · 3:42" class="featured__meta" />
+                    <ui:Button name="featured-sing" class="featured__sing">
                         <SpotlightAR.UI.Icon glyph="Mic" />
+                        <ui:Label text="Sing it" class="featured__sing-label t-semibold" />
                     </ui:Button>
                 </ui:VisualElement>
             </ui:VisualElement>
@@ -37,7 +33,7 @@
                 <ui:Label name="search-online-label" text="Search YouTube" class="search-online__label" />
             </ui:Button>
             <ui:VisualElement class="list-header">
-                <ui:Label name="list-title" text="Top this week" class="list-header__title heading--bold heading" />
+                <ui:Label name="list-title" text="Top this week" class="list-header__title heading--bold" />
                 <ui:Button name="see-all" text="See all" class="text-button t-semibold" />
             </ui:VisualElement>
             <ui:Label name="home-status" text="Loading songs…" class="home__status" />
@@ -45,17 +41,16 @@
         </ui:ScrollView>
         <ui:VisualElement class="nav">
             <ui:Button name="nav-home" class="nav__item nav__item--active">
-                <SpotlightAR.UI.Icon glyph="Home" />
-                <ui:Label text="Home" class="nav__label t-semibold" />
+                <SpotlightAR.UI.Icon glyph="Music" />
+                <ui:Label text="Songs" class="nav__label t-semibold" />
             </ui:Button>
-            <ui:Button name="nav-library" class="nav__item nav__item--soon">
+            <ui:Button name="nav-library" class="nav__item">
                 <SpotlightAR.UI.Icon glyph="Library" />
+                <ui:Label text="Library" class="nav__label t-semibold" />
             </ui:Button>
-            <ui:Button name="nav-sing" class="nav__item nav__sing">
-                <SpotlightAR.UI.Icon glyph="Mic" />
-            </ui:Button>
-            <ui:Button name="nav-stages" class="nav__item nav__item--soon">
-                <SpotlightAR.UI.Icon glyph="Cube" />
+            <ui:Button name="nav-stages" class="nav__item">
+                <SpotlightAR.UI.Icon glyph="Spotlight" />
+                <ui:Label text="Stages" class="nav__label t-semibold" />
             </ui:Button>
         </ui:VisualElement>
     </ui:VisualElement>

@@ -31,6 +31,9 @@ namespace SpotlightAR.UI
         readonly Label hypeLabel;
         readonly Label tip;
         readonly Label keyLine;
+        readonly VisualElement keyRow;
+        readonly Label keyTitle;
+        readonly Icon keyIcon;
         readonly Icon[] starIcons = new Icon[StarCount];
 
         IVisualElementScheduledItem countUp;
@@ -55,6 +58,9 @@ namespace SpotlightAR.UI
             hypeLabel = Require<Label>("stat-hype-label");
             tip = Require<Label>("results-tip");
             keyLine = Require<Label>("results-key");
+            keyRow = Require<VisualElement>("results-key-row");
+            keyTitle = Require<Label>("results-key-title");
+            keyIcon = Require<Icon>("results-key-icon");
 
             Require<Button>("sing-again-button").clicked += () => SingAgainRequested?.Invoke();
             Require<Button>("new-song-button").clicked += () => NewSongRequested?.Invoke();
@@ -115,8 +121,21 @@ namespace SpotlightAR.UI
 
             string keyText = KeyLine(result);
             keyLine.text = keyText;
-            keyLine.style.display = string.IsNullOrEmpty(keyText) ? DisplayStyle.None : DisplayStyle.Flex;
-            keyLine.EnableInClassList("results__key--off", result.keyMatch == KeyMatch.Different);
+            keyRow.style.display = string.IsNullOrEmpty(keyText) ? DisplayStyle.None : DisplayStyle.Flex;
+            keyRow.EnableInClassList("note-row--off", result.keyMatch == KeyMatch.Different);
+            keyRow.EnableInClassList("note-row--unknown", result.keyMatch == KeyMatch.Unknown);
+            keyTitle.text = result.keyMatch switch
+            {
+                KeyMatch.Match => "IN KEY",
+                KeyMatch.Different => "OFF KEY",
+                _ => "YOUR KEY"
+            };
+            keyIcon.Glyph = result.keyMatch switch
+            {
+                KeyMatch.Match => IconGlyph.Check,
+                KeyMatch.Different => IconGlyph.Close,
+                _ => IconGlyph.Music
+            };
 
             AnimateStars(result.stars);
             AnimateScore(result.score);
@@ -131,9 +150,9 @@ namespace SpotlightAR.UI
             switch (result.keyMatch)
             {
                 case KeyMatch.Match:
-                    return $"You sang in {result.sungKey}. The song is in {result.songKey}: same notes, you matched it ✓";
+                    return $"You sang in {result.sungKey}, the same notes as the song ({result.songKey}).";
                 case KeyMatch.Different:
-                    return $"You sang in {result.sungKey}, but the song is in {result.songKey}. Different notes, so you were off key.";
+                    return $"You sang in {result.sungKey}, but the song is in {result.songKey}.";
                 default:
                     return $"You sang in {result.sungKey}. We couldn't find this song's key, so look it up on Tunebat to compare.";
             }

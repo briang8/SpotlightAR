@@ -20,7 +20,14 @@ namespace SpotlightAR.UI
         Library,
         Cube,
         Waveform,
-        ChevronLeft
+        ChevronLeft,
+        Moon,
+        Sun,
+        Music,
+        Spotlight,
+        Rewind,
+        Forward,
+        Volume
     }
 
     /// <summary>
@@ -148,6 +155,52 @@ namespace SpotlightAR.UI
                     break;
                 case IconGlyph.ChevronLeft:
                     Polyline(p, false, 15, 5, 8, 12, 15, 19);
+                    break;
+                case IconGlyph.Moon:
+                    // Crescent: the outer circle's lit edge, back along the inner circle that cuts it.
+                    p.BeginPath();
+                    p.Arc(P(12, 12), 8f * unit, Angle.Degrees(3.5f), Angle.Degrees(266.5f));
+                    p.Arc(P(16, 8), 6f * unit, Angle.Degrees(221.6f), Angle.Degrees(48.4f), ArcDirection.CounterClockwise);
+                    p.ClosePath();
+                    p.Stroke();
+                    break;
+                case IconGlyph.Sun:
+                    Circle(p, 12, 12, 4f);
+                    for (int i = 0; i < 8; i++)
+                    {
+                        float a = i * 45f * Mathf.Deg2Rad;
+                        Line(p, 12 + Mathf.Cos(a) * 7f, 12 + Mathf.Sin(a) * 7f, 12 + Mathf.Cos(a) * 9.5f, 12 + Mathf.Sin(a) * 9.5f);
+                    }
+                    break;
+                case IconGlyph.Music:
+                    Polyline(p, false, 9, 18, 9, 5, 20, 3, 20, 16);
+                    Circle(p, 6, 18, 3f);
+                    Circle(p, 17, 16, 3f);
+                    break;
+                case IconGlyph.Spotlight:
+                    Polyline(p, true, 9, 3, 15, 3, 14, 7, 10, 7);
+                    p.Stroke();
+                    Polyline(p, false, 10, 7, 5, 17, 19, 17, 14, 7);
+                    Line(p, 3, 21, 21, 21);
+                    break;
+                case IconGlyph.Rewind:
+                    p.BeginPath();
+                    p.Arc(P(12, 12), 8f * unit, Angle.Degrees(180f), Angle.Degrees(-135.5f), ArcDirection.CounterClockwise);
+                    p.Stroke();
+                    Polyline(p, false, 4, 4, 4, 8, 8, 8);
+                    break;
+                case IconGlyph.Forward:
+                    p.BeginPath();
+                    p.Arc(P(12, 12), 8f * unit, Angle.Degrees(0f), Angle.Degrees(315.5f));
+                    p.Stroke();
+                    Polyline(p, false, 20, 4, 20, 8, 16, 8);
+                    break;
+                case IconGlyph.Volume:
+                    Polyline(p, true, 4, 9, 8, 9, 13, 5, 13, 19, 8, 15, 4, 15);
+                    p.Stroke();
+                    p.BeginPath();
+                    p.Arc(P(13, 12), 4.5f * unit, Angle.Degrees(-45f), Angle.Degrees(45f));
+                    p.Stroke();
                     break;
             }
         }

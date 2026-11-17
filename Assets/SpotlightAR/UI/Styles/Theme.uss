@@ -1,22 +1,90 @@
-/* Spotlight AR design tokens: dark night-out UI with one warm amber accent.
+/* Spotlight AR design tokens.
+   Light by default (soft warm white, white cards), with a warm-charcoal dark mode.
+   Burgundy ("wine") is the action colour; coral marks live performance values (score, hype, progress).
    Sizes are in panel units for a 1080-wide reference screen (see Panel Settings). */
 
 :root {
-    --c-bg: #0E0F16;
-    --c-surface: rgba(14, 15, 22, 0.88);
-    --c-surface-raised: #1B1C29;
-    --c-border: #2A2B3A;
-    --c-text: #F5F5F7;
-    --c-muted: #A3A6B5;
-    --c-amber: #FFB547;
-    --c-amber-pressed: #E89F33;
-    --c-amber-tint: #2A2215;
-    --c-on-amber: #1A1206;
-    --c-green: #6EE7A0;
-    --c-danger: #FF6B6B;
+    --c-bg: #FAF8F6;
+    --c-surface: #FFFFFF;
+    --c-fill: #F2EEEB;
+    --c-border: #E9E3DF;
+    --c-text: #1E1A19;
+    --c-muted: #776E6A;
+
+    --c-accent: #8C1D40;
+    --c-accent-pressed: #711530;
+    --c-accent-tint: #F7E5EA;
+    --c-on-accent: #FFFFFF;
+
+    --c-hi: #E35A35;
+    --c-hi-tint: #FDEBE4;
+
+    --c-green: #1B8A4C;
+    --c-green-tint: #E2F2E8;
+    --c-on-green: #FFFFFF;
+    --c-danger: #C4372F;
+    --c-danger-tint: #FBE7E4;
+    --c-star: #F0A431;
+
+    /* panels over the camera stay solid so they read on any room */
+    --c-overlay: rgba(255, 255, 255, 0.97);
+    --c-video: #0C0B0D;
+
+    --meter-quiet: #E35A35;
+    --meter-loud: #8C1D40;
 
     color: var(--c-text);
     background-color: rgba(0, 0, 0, 0);
+}
+
+/* Dark mode: set on the safe-area element by UIManager, so every screen inherits it. */
+.theme-dark {
+    --c-bg: #161213;
+    --c-surface: #221C1D;
+    --c-fill: #2C2526;
+    --c-border: #3A3133;
+    --c-text: #F7F1EF;
+    --c-muted: #A99D9A;
+
+    --c-accent: #E0577A;
+    --c-accent-pressed: #C8466A;
+    --c-accent-tint: #3A1820;
+    --c-on-accent: #1A0A0E;
+
+    --c-hi: #FF8A65;
+    --c-hi-tint: #3A2018;
+
+    --c-green: #5FD68F;
+    --c-green-tint: #173323;
+    --c-on-green: #0B2716;
+    --c-danger: #FF7A70;
+    --c-danger-tint: #3A1A18;
+    --c-star: #FFC24D;
+
+    --c-overlay: rgba(34, 28, 29, 0.97);
+
+    --meter-quiet: #FF8A65;
+    --meter-loud: #E0577A;
+}
+
+/* Colours read by C# drawing code (custom properties are read per element, so they are set
+   on the element itself rather than inherited from :root). */
+.voice-meter {
+    --meter-quiet: #E35A35;
+    --meter-loud: #8C1D40;
+}
+
+.theme-dark .voice-meter {
+    --meter-quiet: #FF8A65;
+    --meter-loud: #E0577A;
+}
+
+.lyrics__now {
+    --lyric-sung: #8C1D40;
+}
+
+.theme-dark .lyrics__now {
+    --lyric-sung: #E0577A;
 }
 
 /* Body text: Inter. Font assets are pre-baked SDF atlases (Latin + accents),
@@ -38,12 +106,19 @@
     -unity-font-definition: url("../Fonts/Inter-Bold-SDF.asset");
 }
 
-/* Headings: Bricolage Grotesque, bold and poster-like. */
+/* Headings: Inter Display, the large-size cut of Inter, tightly spaced. */
 .heading {
-    -unity-font-definition: url("../Fonts/BricolageGrotesque-ExtraBold-SDF.asset");
-    letter-spacing: -0.5px;
+    -unity-font-definition: url("../Fonts/InterDisplay-ExtraBold-SDF.asset");
+    letter-spacing: -1.5px;
 }
 
 .heading--bold {
-    -unity-font-definition: url("../Fonts/BricolageGrotesque-Bold-SDF.asset");
+    -unity-font-definition: url("../Fonts/InterDisplay-Bold-SDF.asset");
+    letter-spacing: -1px;
+}
+
+.t-caps {
+    -unity-font-definition: url("../Fonts/Inter-Bold-SDF.asset");
+    font-size: 26px;
+    letter-spacing: 2px;
 }

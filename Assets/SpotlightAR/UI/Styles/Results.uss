@@ -4,23 +4,28 @@
     padding-bottom: 0;
 }
 
+.results__scroll {
+    flex-grow: 0;
+    flex-shrink: 1;
+    margin: 0 -52px;
+}
+
 .results__card {
-    margin: 0 -44px;
-    padding: 56px 52px 64px 52px;
-    border-top-left-radius: 64px;
-    border-top-right-radius: 64px;
-    background-color: rgba(14, 15, 22, 0.96);
+    padding: 60px 52px 64px 52px;
+    border-top-left-radius: 80px;
+    border-top-right-radius: 80px;
+    background-color: var(--c-surface);
     align-items: stretch;
 }
 
 .results__headline {
-    font-size: 84px;
+    font-size: 96px;
     -unity-text-align: middle-center;
 }
 
 .results__song {
     margin-top: 4px;
-    font-size: 34px;
+    font-size: 32px;
     color: var(--c-muted);
     -unity-text-align: middle-center;
     white-space: nowrap;
@@ -31,12 +36,12 @@
 .results__stars {
     flex-direction: row;
     justify-content: center;
-    margin: 36px 0 20px 0;
+    margin: 32px 0 12px 0;
 }
 
 .results-star {
-    width: 96px;
-    height: 96px;
+    width: 92px;
+    height: 92px;
     margin: 0 10px;
     color: var(--c-border);
     scale: 0.85 0.85;
@@ -48,136 +53,148 @@
 }
 
 .results-star--earned {
-    color: var(--c-amber);
+    color: var(--c-star);
     scale: 1 1;
 }
 
-.results__score-row {
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-}
-
 .results__score {
-    font-size: 128px;
+    font-size: 150px;
+    color: var(--c-hi);
+    -unity-text-align: middle-center;
 }
 
 .results__badge {
-    margin-left: 24px;
-    padding: 10px 22px;
+    align-self: center;
+    margin-top: 4px;
+    padding: 10px 26px;
     border-radius: 30px;
     background-color: var(--c-green);
 }
 
 .results__badge-text {
-    font-size: 26px;
-    letter-spacing: 1px;
-    color: var(--c-bg);
+    font-size: 24px;
+    color: var(--c-on-green);
 }
 
 .results__best {
-    font-size: 32px;
-    color: var(--c-green);
+    margin-top: 10px;
+    font-size: 30px;
+    color: var(--c-muted);
     -unity-text-align: middle-center;
 }
 
 .stats {
     flex-direction: row;
     flex-wrap: wrap;
-    margin: 40px -10px 0 -10px;
+    justify-content: space-between;
+    margin-top: 36px;
 }
 
+/* One tile per stat: the tile carries the fill, so value and label sit on one surface. */
 .stat {
-    width: 50%;
-    padding: 10px;
-}
-
-.stat > .stat__value,
-.stat > .stat__label {
-    padding: 0 28px;
+    width: 48.8%;
+    margin-bottom: 20px;
+    padding: 26px 32px;
+    border-radius: 40px;
+    background-color: var(--c-fill);
 }
 
 .stat__value {
-    padding-top: 22px;
-    font-size: 54px;
-    background-color: var(--c-surface-raised);
-    border-top-left-radius: 28px;
-    border-top-right-radius: 28px;
+    font-size: 58px;
 }
 
 .stat__label {
-    padding-bottom: 24px;
-    font-size: 28px;
+    margin-top: 2px;
+    font-size: 27px;
     color: var(--c-muted);
-    background-color: var(--c-surface-raised);
-    border-bottom-left-radius: 28px;
-    border-bottom-right-radius: 28px;
     white-space: normal;
 }
 
-.results__key {
-    margin: 26px 0 0 0;
-    padding: 0 8px;
+/* Key result and coaching tip: quiet rows with an icon and a small label. */
+.note-row {
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 20px;
+    padding: 28px 32px;
+    border-radius: 44px;
+    background-color: var(--c-fill);
+}
+
+.note-row__badge {
+    width: 64px;
+    height: 64px;
+    margin-right: 26px;
+    border-radius: 32px;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: var(--c-green);
+}
+
+.note-row__badge .icon {
+    width: 36px;
+    height: 36px;
+    color: var(--c-on-green);
+}
+
+.note-row__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.note-row__title {
     color: var(--c-green);
-    font-size: 29px;
-    -unity-text-align: middle-center;
-    white-space: normal;
 }
 
-.results__key--off {
-    color: var(--c-danger);
-}
-
-.results__tip {
-    margin: 30px 0 36px 0;
-    padding: 26px 32px;
-    border-radius: 28px;
-    border-width: 2px;
-    border-color: var(--c-amber);
-    background-color: var(--c-amber-tint);
-    color: var(--c-text);
+.note-row__body {
+    margin-top: 4px;
     font-size: 31px;
     white-space: normal;
 }
 
-.secondary-button {
-    height: 130px;
-    margin: 20px 0 0 0;
-    border-radius: 65px;
-    border-width: 3px;
-    border-color: var(--c-border);
-    background-color: rgba(0, 0, 0, 0);
+.note-row--off .note-row__badge {
+    background-color: var(--c-danger);
+}
+
+.note-row--off .note-row__title {
+    color: var(--c-danger);
+}
+
+.note-row--unknown .note-row__badge {
+    background-color: var(--c-border);
+}
+
+.note-row--unknown .note-row__badge .icon {
     color: var(--c-text);
-    font-size: 40px;
-    -unity-text-align: middle-center;
 }
 
-.secondary-button:hover,
-.secondary-button:focus {
-    border-color: var(--c-border);
-    background-color: rgba(0, 0, 0, 0);
+.note-row--unknown .note-row__title {
+    color: var(--c-muted);
 }
 
-.secondary-button:active {
-    scale: 0.97 0.97;
+.note-row--tip {
+    background-color: var(--c-hi-tint);
 }
 
-/* ---------- HUD score feedback ---------- */
-
-.score-card {
-    transition-property: scale;
-    transition-duration: 0.18s;
-    transition-timing-function: ease-out-back;
+.note-row--tip .note-row__badge {
+    background-color: var(--c-hi);
 }
 
-.score-card--pulse {
-    scale: 1.12 1.12;
+.note-row--tip .note-row__badge .icon {
+    color: var(--c-on-accent);
 }
 
-.score-card__hype--x2 {
-    color: var(--c-amber);
+.note-row--tip .note-row__title {
+    color: var(--c-hi);
 }
 
-.score-card__hype--x3 {
-    color: #FF7BD5;
+.results__actions {
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.results__primary {
+    min-width: 0;
+    margin-right: 20px;
 }

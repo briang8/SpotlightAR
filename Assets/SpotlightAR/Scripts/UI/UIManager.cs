@@ -44,6 +44,22 @@ namespace SpotlightAR.UI
             Results = Register(new ResultsScreen(root.Q("results-screen")));
 
             root.RegisterCallback<GeometryChangedEvent>(_ => ApplySafeArea(true));
+
+            Home.ThemeToggleRequested += () => SetDarkMode(!DarkMode);
+            SetDarkMode(PlayerPrefs.GetInt(DarkModeKey, 0) == 1);
+        }
+
+        const string DarkModeKey = "dark_mode";
+
+        public bool DarkMode { get; private set; }
+
+        /// <summary>Light mode is the default; dark mode swaps the colour tokens (Theme.uss) for every screen.</summary>
+        public void SetDarkMode(bool dark)
+        {
+            DarkMode = dark;
+            safeArea.EnableInClassList("theme-dark", dark);
+            Home.SetDarkMode(dark);
+            PlayerPrefs.SetInt(DarkModeKey, dark ? 1 : 0);
         }
 
         T Register<T>(T screen) where T : UIScreen
