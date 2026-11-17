@@ -19,7 +19,7 @@
                 </ui:VisualElement>
                 <ui:VisualElement class="stat">
                     <ui:Label name="stat-note" text="0.0s" class="stat__value heading heading--bold" />
-                    <ui:Label text="longest steady note" class="stat__label" />
+                    <ui:Label name="stat-note-label" text="longest steady note" class="stat__label" />
                 </ui:VisualElement>
                 <ui:VisualElement class="stat">
                     <ui:Label name="stat-pitch" text="–" class="stat__value heading heading--bold" />
@@ -30,6 +30,7 @@
                     <ui:Label name="stat-hype-label" text="peak crowd hype" class="stat__label" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <ui:Label name="results-key" text="You sang in C minor." class="results__key" />
             <ui:Label name="results-tip" text="Tip" class="results__tip" />
             <ui:Button name="sing-again-button" text="Sing again" class="primary-button t-semibold" />
             <ui:Button name="new-song-button" text="Pick a new song" class="secondary-button t-semibold" />

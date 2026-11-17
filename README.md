@@ -27,17 +27,24 @@ Built with Unity 6 and AR Foundation (ARCore) as a vertical slice for an AR/VR c
 - **Unity 6000.3.27f1 (Unity 6.3 LTS)** with the **Android Build Support** module
 - An **ARCore-supported Android phone** (Android 8.0 / API 26 or newer) with **Google Play Services for AR** installed
 - **Headphones** (wired or Bluetooth) for singing: the app checks that the song is not playing through a speaker, so the mic only hears you
-- A **YouTube Data API v3** key (free) and a **GetSongBPM** API key (free)
+- A **YouTube Data API v3** key (free). Song tempo and key come from open databases that need no key
 
 ## How to run it
 
 1. **Clone the repo** and open the folder in Unity Hub with Unity 6000.3.27f1.
-2. **Add your API keys.** They are kept out of git on purpose. Create these two files and paste one key into each (nothing else in the file):
+2. **Add your YouTube API key.** It is kept out of git on purpose. Create this file and paste the key into it (nothing else in the file):
    - `Assets/SpotlightAR/Resources/Secrets/youtube_api_key.txt`
-   - `Assets/SpotlightAR/Resources/Secrets/getsongbpm_api_key.txt`
 3. Open the scene **`Assets/SpotlightAR/Scenes/Main.unity`**.
 4. **Test in the Editor**: press Play. AR runs in Unity's XR Simulation environment (hold right-click and use WASD to look around, left-click a surface to place the stage). Song playback is simulated in the Editor; the real YouTube video only plays on the phone. Press **End** to finish a song early.
 5. **Build to a phone**: enable USB debugging on the phone, plug it in, then **File → Build Profiles → Android → Build And Run**.
+
+### Known limitations
+
+- **Needs an internet connection.** Songs stream from YouTube and can't be saved offline (YouTube's terms don't allow downloading or caching videos). Song lists, covers and tempo/key data are cached, so menus still load offline, but a song can't play without a connection.
+
+- **Song key data is incomplete.** The key comes from AcousticBrainz, which stopped collecting in 2022 and detects keys automatically. A key is only used when most matching recordings agree on the notes, so newer songs (and many Afrobeats tracks) have no key. The results screen then shows the key you sang in, suggests looking up the song's key on a site like Tunebat to compare, and the pitch stat becomes "stayed in one key".
+- **Relative keys count as the same.** F♯ major and D♯ minor use the same notes, so singing either one on that song counts as in key.
+- **Some songs have no tempo** on Deezer or AcousticBrainz. Rap songs then show flow speed instead of "on the beat".
 
 ### Changing the playlists
 
@@ -65,7 +72,8 @@ Assets/SpotlightAR/
 
 ## Credits
 
-- Song tempo and key data: **[GetSongBPM](https://getsongbpm.com)**
+- Song tempo: **[Deezer API](https://developers.deezer.com/api)**
+- Song key and backup tempo: **[AcousticBrainz](https://acousticbrainz.org)** (CC0 data), matched through **[MusicBrainz](https://musicbrainz.org)**
 - Song lists and video playback: **YouTube Data API v3** and the **YouTube IFrame Player API**
 - In-app web view: **[gree/unity-webview](https://github.com/gree/unity-webview)** (zlib licence)
 - Fonts: **[Inter](https://github.com/rsms/inter)** and **[Bricolage Grotesque](https://github.com/ateliertriay/bricolage)** (SIL Open Font License, licence files in `Assets/SpotlightAR/UI/Fonts`)

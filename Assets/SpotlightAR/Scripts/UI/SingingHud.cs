@@ -34,7 +34,8 @@ namespace SpotlightAR.UI
         public event Action<bool> MicToggled;
         public event Action MoveRequested;
         public event Action<bool> PauseToggled;
-        public event Action FinaleRequested;
+        /// <summary>The player wants to stop here and get results for what they sang.</summary>
+        public event Action FinishRequested;
 
         public SingingHud(VisualElement root) : base(root)
         {
@@ -54,7 +55,7 @@ namespace SpotlightAR.UI
 
             Require<Button>("close-button").clicked += () => CloseRequested?.Invoke();
             Require<Button>("move-button").clicked += () => MoveRequested?.Invoke();
-            Require<Button>("star-button").clicked += () => FinaleRequested?.Invoke();
+            Require<Button>("finish-button").clicked += () => FinishRequested?.Invoke();
             micButton.clicked += () => SetMuted(!muted, true);
             Require<Button>("pause-button").clicked += () => SetPaused(!paused, true);
 
@@ -137,7 +138,7 @@ namespace SpotlightAR.UI
             noticeLabel.style.display = string.IsNullOrEmpty(message) ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
-        protected override void OnShown() => meter.Clear();
+        protected override void OnShown() => meter.ClearLevels();
 
         static string Format(float seconds)
         {

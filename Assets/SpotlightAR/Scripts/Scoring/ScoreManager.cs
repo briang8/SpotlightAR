@@ -1,9 +1,13 @@
 using System;
 using SpotlightAR.Audio;
+using SpotlightAR.Songs;
 using UnityEngine;
 
 namespace SpotlightAR.Scoring
 {
+    /// <summary>Rap is judged on flow (staying on the beat); sung songs on held notes and key.</summary>
+    public enum ScoreStyle { Singing, Rap }
+
     /// <summary>
     /// Turns the voice into a score. Rewards consistency rather than raw volume:
     /// singing through the song fills the crowd hype meter (x1 to x3), going quiet drains it,
@@ -13,6 +17,10 @@ namespace SpotlightAR.Scoring
     public sealed class ScoreManager
     {
         readonly ScoringSettings settings;
+        readonly RhythmTracker rhythm = new RhythmTracker();
+        readonly KeyTracker keys = new KeyTracker();
+        ScoreStyle style;
+        SongInsights insights;
 
         float points;
         float hypeMeter;
@@ -47,12 +55,30 @@ namespace SpotlightAR.Scoring
         /// <summary>Raised each time the score passes a milestone (500, 1000, ...).</summary>
         public event Action<int> MilestoneReached;
 
-        public void Begin()
+        public ScoreStyle Style => style;
+
+        /// <summary>Start a new performance. Insights may be null when tempo/key are unknown.</summary>
+        public void Begin(SongInsights songInsights, ScoreStyle scoreStyle)
         {
             points = hypeMeter = silence = songTime = singingTime = hypeSeconds = secondsAtMax = 0f;
             noteReference = noteTime = unvoiced = wobbleSum = wobbleTime = longestNote = 0f;
             Hype = PeakHype = 1;
             nextMilestone = settings.milestoneStep;
+
+            insights = songInsights;
+            style = scoreStyle;
+            rhythm.Begin(insights != null && insights.HasTempo ? insights.bpm : 0f);
+            keys.Begin(insights);
+        }
+
+        /// <summary>A syllable started at this song time. Rap earns points for staying on the beat.</summary>
+        public void AddOnset(float songTimeSeconds)
+        {
+            float before = rhythm.LastWindowStrength;
+            rhythm.AddOnset(songTimeSeconds);
+            float after = rhythm.LastWindowStrength;
+            if (style == ScoreStyle.Rap && after >= 0f && !Mathf.Approximately(before, after))
+                points += settings.rhythmBonusPerWindow * after * Hype;
         }
 
         /// <summary>Feed one frame of the performance (loudness 0-1, pitch in Hz or 0).</summary>
@@ -72,6 +98,7 @@ namespace SpotlightAR.Scoring
             }
 
             UpdateHeldNote(singing ? pitchHz : 0f, deltaTime);
+            keys.AddFrame(singing ? pitchHz : 0f, deltaTime);
 
             hypeSeconds += Hype * deltaTime;
             if (Hype == 3) secondsAtMax += deltaTime;
@@ -144,7 +171,7 @@ namespace SpotlightAR.Scoring
             wobbleTime += deltaTime;
 
             float steadiness = 1f - Mathf.Clamp01(wobble / settings.wobbleForZero);
-            points += settings.heldNoteBonusPerSecond * steadiness * Hype * deltaTime;
+            if (style == ScoreStyle.Singing) points += settings.heldNoteBonusPerSecond * steadiness * Hype * deltaTime;
         }
 
         void EndNote()
@@ -154,19 +181,28 @@ namespace SpotlightAR.Scoring
             noteTime = 0f;
         }
 
-        public PerformanceResult BuildResult(string songId, string songTitle)
+        /// <summary>
+        /// Builds the result for the part that was performed. Coverage and hype are measured
+        /// over the time actually played, so finishing after one strong verse still rates well.
+        /// </summary>
+        public PerformanceResult BuildResult(string songId, string songTitle, float secondsPlayed, float songDuration)
         {
             EndNote();
+            rhythm.Finish();
             float time = Mathf.Max(songTime, 0.001f);
             float coverage = singingTime / time;
             float averageHype = hypeSeconds / time;
             float steadiness = wobbleTime >= 1f ? 1f - Mathf.Clamp01(wobbleSum / wobbleTime / settings.wobbleForZero) : -1f;
+            float onBeat = rhythm.OnBeat;
+            float inKey = keys.InSongKey;
+            float inOwnKey = keys.InOwnKey;
 
-            // Rating: mostly "did you sing it", then how hyped the crowd got, then pitch control.
+            // Rating: mostly "did you perform it", then how hyped the crowd got, then the
+            // skill part: flow for rap; pitch (key + steadiness) and timing for singing.
             float coverageScore = Mathf.Clamp01(coverage / settings.fullCoverage);
             float hypeScore = Mathf.InverseLerp(1f, 3f, averageHype);
-            float pitchScore = steadiness >= 0f ? steadiness : coverageScore * 0.6f;
-            float rating = 0.5f * coverageScore + 0.3f * hypeScore + 0.2f * pitchScore;
+            float skillScore = SkillScore(steadiness, onBeat, inKey, inOwnKey, coverageScore);
+            float rating = 0.45f * coverageScore + 0.25f * hypeScore + 0.3f * skillScore;
 
             int stars = 0;
             for (int i = 0; i < settings.starThresholds.Length; i++) if (rating >= settings.starThresholds[i]) stars = i + 1;
@@ -182,8 +218,41 @@ namespace SpotlightAR.Scoring
                 coverage = coverage,
                 longestNote = longestNote,
                 steadiness = steadiness,
-                secondsAtMaxHype = secondsAtMax
+                secondsAtMaxHype = secondsAtMax,
+                secondsPlayed = secondsPlayed,
+                songDuration = songDuration,
+                style = style,
+                onBeat = onBeat,
+                inKey = inKey,
+                inOwnKey = inOwnKey,
+                sungKey = keys.SungKeyName,
+                songKey = insights != null ? insights.DescribeKey() : string.Empty,
+                keyMatch = keys.Match,
+                bpm = insights != null && insights.HasTempo ? insights.bpm : 0f,
+                syllablesPerSecond = singingTime > 1f ? rhythm.TotalOnsets / singingTime : 0f,
+                songInfo = insights != null ? insights.Describe() : string.Empty
             };
         }
+
+        float SkillScore(float steadiness, float onBeat, float inKey, float inOwnKey, float coverageScore)
+        {
+            float fallback = coverageScore * 0.6f; // no data to judge skill: don't punish, don't reward
+            if (style == ScoreStyle.Rap) return onBeat >= 0f ? onBeat : fallback;
+
+            // Random notes land in a key by chance (about 58%), so only credit what's above that.
+            // With the song's key unknown, judge staying in the player's own key, on a stricter scale.
+            float keyScore = inKey >= 0f ? AboveChance(inKey, settings.inKeyByChance)
+                           : inOwnKey >= 0f ? AboveChance(inOwnKey, settings.ownKeyByChance) : -1f;
+
+            float pitch;
+            if (keyScore >= 0f && steadiness >= 0f) pitch = (keyScore + steadiness) * 0.5f;
+            else if (keyScore >= 0f) pitch = keyScore;
+            else pitch = steadiness >= 0f ? steadiness : fallback;
+
+            // Known tempo: being off the beat costs a share of the skill score.
+            return onBeat >= 0f ? Mathf.Lerp(pitch, onBeat, settings.singingRhythmWeight) : pitch;
+        }
+
+        static float AboveChance(float share, float chance) => Mathf.Clamp01((share - chance) / (0.95f - chance));
     }
 }

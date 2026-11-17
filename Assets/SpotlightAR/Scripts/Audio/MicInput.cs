@@ -40,6 +40,12 @@ namespace SpotlightAR.Audio
         [Tooltip("Ignore pitch readings the detector is unsure about.")]
         [SerializeField, Range(0f, 1f)] float minPitchConfidence = 0.8f;
 
+        [Header("Syllable onsets (rhythm)")]
+        [Tooltip("Energy jump (ratio) between short audio blocks that counts as a new syllable.")]
+        [SerializeField] float onsetRatio = 2f;
+        [Tooltip("Minimum time between two syllables (seconds).")]
+        [SerializeField] float onsetMinGap = 0.08f;
+
         [Header("Smoothing")]
         [Tooltip("How quickly loudness rises when singing starts.")]
         [SerializeField] float attack = 18f;
@@ -59,11 +65,27 @@ namespace SpotlightAR.Audio
         float pitch;
         int captureRate;
 
+        // Onset detection works on small consecutive blocks of every new sample.
+        const int OnsetHop = 512;
+        readonly float[] hopBuffer = new float[OnsetHop];
+        int lastReadPosition;
+        float previousEnergy;
+        float lastOnsetTime;
+        float currentFloorDb = -50f;
+
+        /// <summary>
+        /// Raised when a new syllable starts. The argument is how many seconds ago it happened,
+        /// so listeners can line it up exactly with the song's playback time.
+        /// </summary>
+        public event Action<float> OnsetDetected;
+
         /// <summary>Raised when capture starts (true) or stops (false).</summary>
         public event Action<bool> ListeningChanged;
 
         /// <summary>Raised when the player refuses microphone access.</summary>
+#pragma warning disable CS0067 // only raised on Android, where the permission prompt exists
         public event Action PermissionDenied;
+#pragma warning restore CS0067
 
         /// <summary>When muted, loudness reads as zero but capture keeps running.</summary>
         public bool Muted { get; set; }
@@ -80,14 +102,93 @@ namespace SpotlightAR.Audio
 
         public float GetPitch() => Muted ? 0f : pitch;
 
+        /// <summary>Sample rate of the running capture (0 when not listening).</summary>
+        public int SampleRate => IsListening() ? captureRate : 0;
+
+        /// <summary>Copies the newest mic samples into buffer. False when nothing is available yet.</summary>
+        public bool TryReadLatest(float[] buffer)
+        {
+            if (!IsListening()) return false;
+            int position = Microphone.GetPosition(device);
+            if (position <= 0) return false;
+            int start = position - buffer.Length;
+            if (start < 0) start += clip.samples;
+            return clip.GetData(buffer, start);
+        }
+
         public bool IsListening() => clip != null && Microphone.IsRecording(device);
+
+        /// <summary>
+        /// Raised when headphones or another audio device are connected or removed. The mic is
+        /// restarted automatically; listeners can re-check where the sound is going.
+        /// </summary>
+        public event Action RouteChanged;
+
+        // Health check: plugging headphones in moves Android's mic to the headset, and the old
+        // capture then delivers frozen or perfectly silent audio. Restart it when that happens.
+        const float StallSeconds = 0.5f;
+        const float DeadSeconds = 1f;
+        const float RestartCooldown = 2f;
+        int lastPosition = -1;
+        float stalledFor;
+        float deadFor;
+        float lastRestart = -10f;
+        bool lastReadWasDead;
 
         void OnEnable()
         {
+            AudioSettings.OnAudioConfigurationChanged += OnAudioDeviceChanged;
             if (startOnEnable) StartListening();
         }
 
-        void OnDisable() => StopCapture();
+        void OnDisable()
+        {
+            AudioSettings.OnAudioConfigurationChanged -= OnAudioDeviceChanged;
+            StopCapture();
+        }
+
+        readonly AudioRouteWatcher routeWatcher = new AudioRouteWatcher();
+        float lastRouteChange = -10f;
+
+        void OnAudioDeviceChanged(bool deviceWasChanged)
+        {
+            if (!deviceWasChanged) return;
+            // Unity's own output needs a reset after a device change (Unity docs pattern).
+            AudioSettings.Reset(AudioSettings.GetConfiguration());
+            HandleRouteChange();
+        }
+
+        void HandleRouteChange()
+        {
+            // Both Unity and the Android watcher may report the same plug-in; act once.
+            if (Time.unscaledTime - lastRouteChange < 1.5f) return;
+            lastRouteChange = Time.unscaledTime;
+            RestartCapture("audio device changed");
+            RouteChanged?.Invoke();
+        }
+
+        void RestartCapture(string reason)
+        {
+            if (!wantsToListen) return;
+            lastRestart = Time.unscaledTime;
+            stalledFor = deadFor = 0f;
+            lastPosition = -1;
+            Debug.Log($"[MicInput] Restarting the microphone: {reason}");
+            StopCapture();
+            StartListening();
+        }
+
+        void CheckCaptureHealth(float dt)
+        {
+            int position = Microphone.GetPosition(device);
+            stalledFor = position == lastPosition ? stalledFor + dt : 0f;
+            lastPosition = position;
+            deadFor = lastReadWasDead ? deadFor + dt : 0f;
+
+            if (Time.unscaledTime - lastRestart < RestartCooldown) return;
+            if (stalledFor >= StallSeconds) RestartCapture("capture stopped moving");
+            else if (deadFor >= DeadSeconds) RestartCapture("capture went silent");
+        }
 
         void OnApplicationPause(bool paused)
         {
@@ -135,6 +236,8 @@ namespace SpotlightAR.Audio
             // A 1-second looping buffer is plenty: we only ever read the newest samples.
             clip = Microphone.Start(device, true, 1, rate);
             captureRate = rate;
+            lastReadPosition = 0;
+            previousEnergy = 0f;
             samples = new float[sampleSize];
             pitchSamples = new float[PitchWindow];
             pitchDetector = new PitchDetector(PitchWindow);
@@ -166,13 +269,56 @@ namespace SpotlightAR.Audio
                     TrackAmbient(decibels, dt);
                     floor = Mathf.Clamp(ambientDb + noiseMarginDb, noiseFloorDb, ceilingDb - 12f);
                 }
+                currentFloorDb = floor;
                 target = Mathf.InverseLerp(floor, ceilingDb, decibels);
+                DetectOnsets();
             }
+            if (IsListening()) CheckCaptureHealth(dt);
+            if (routeWatcher.Poll()) HandleRouteChange();
 
             float rate = target > level ? attack : release;
             level = Mathf.Lerp(level, target, 1f - Mathf.Exp(-rate * dt));
             peak = Mathf.Max(level, peak - 0.35f * dt);
             pitch = target >= pitchGate ? ReadPitch() : 0f;
+        }
+
+        /// <summary>
+        /// Walks every new sample in 512-sample blocks (about 12 ms) and fires an onset when a
+        /// block's energy jumps well above the previous ones: the start of a syllable.
+        /// </summary>
+        void DetectOnsets()
+        {
+            int position = Microphone.GetPosition(device);
+            int total = clip.samples;
+            int available = position - lastReadPosition;
+            if (available < 0) available += total;
+            if (available > total / 2)
+            {
+                lastReadPosition = position; // fell too far behind (app paused): skip ahead
+                return;
+            }
+
+            float gate = Mathf.Pow(10f, currentFloorDb / 10f); // floor in dB -> energy
+            float now = Time.unscaledTime;
+            while (available >= OnsetHop)
+            {
+                clip.GetData(hopBuffer, lastReadPosition);
+                lastReadPosition = (lastReadPosition + OnsetHop) % total;
+                available -= OnsetHop;
+
+                float energy = 0f;
+                for (int i = 0; i < OnsetHop; i++) energy += hopBuffer[i] * hopBuffer[i];
+                energy /= OnsetHop;
+
+                float secondsAgo = available / (float)captureRate;
+                bool jump = energy > gate && energy > previousEnergy * onsetRatio;
+                if (jump && !Muted && now - secondsAgo - lastOnsetTime >= onsetMinGap)
+                {
+                    lastOnsetTime = now - secondsAgo;
+                    OnsetDetected?.Invoke(secondsAgo);
+                }
+                previousEnergy = Mathf.Lerp(previousEnergy, energy, 0.5f);
+            }
         }
 
         float ReadPitch()
@@ -200,6 +346,8 @@ namespace SpotlightAR.Audio
 
             float sum = 0f;
             for (int i = 0; i < samples.Length; i++) sum += samples[i] * samples[i];
+            // A working mic always picks up a little noise; exact digital silence means a dead route.
+            lastReadWasDead = sum <= 0f;
             float rms = Mathf.Sqrt(sum / samples.Length);
             db = rms > 1e-5f ? 20f * Mathf.Log10(rms) : MinDb;
             return true;

@@ -506,6 +506,17 @@
     white-space: normal;
 }
 
+.setup__insights {
+    align-self: flex-start;
+    margin-top: 18px;
+    padding: 10px 22px;
+    border-radius: 24px;
+    background-color: var(--c-amber-tint);
+    color: var(--c-amber);
+    font-size: 28px;
+    white-space: normal;
+}
+
 .section-title {
     margin: 56px 0 24px 0;
     font-size: 46px;
@@ -621,6 +632,43 @@
 
 .mic-panel--help .mic-panel__dot {
     background-color: var(--c-danger);
+}
+
+.field-label {
+    margin: 36px 0 16px 0;
+    font-size: 32px;
+    color: var(--c-muted);
+}
+
+.name-field {
+    margin: 0;
+    height: 110px;
+    font-size: 40px;
+}
+
+.name-field > .unity-base-text-field__input,
+.name-field > .unity-base-text-field__input:hover,
+.name-field > .unity-base-text-field__input:focus {
+    padding: 0 36px;
+    border-radius: 28px;
+    border-width: 3px;
+    border-color: var(--c-border);
+    background-color: var(--c-surface-raised);
+    color: var(--c-text);
+    -unity-font-definition: url("../Fonts/BricolageGrotesque-Bold-SDF.asset");
+    --unity-cursor-color: var(--c-amber);
+    --unity-selection-color: rgba(255, 181, 71, 0.35);
+}
+
+.name-field > .unity-base-text-field__input:focus {
+    border-color: var(--c-amber);
+}
+
+.mic-panel__recheck {
+    display: none;
+    height: 110px;
+    margin-top: 26px;
+    font-size: 36px;
 }
 
 .setup__actions {

@@ -41,8 +41,8 @@
                 <ui:Button name="pause-button" class="round-button round-button--primary">
                     <SpotlightAR.UI.Icon name="pause-icon" glyph="Pause" />
                 </ui:Button>
-                <ui:Button name="star-button" class="round-button">
-                    <SpotlightAR.UI.Icon glyph="Star" />
+                <ui:Button name="finish-button" class="round-button" tooltip="Finish here">
+                    <SpotlightAR.UI.Icon glyph="Check" />
                 </ui:Button>
             </ui:VisualElement>
         </ui:VisualElement>

@@ -44,7 +44,7 @@ namespace SpotlightAR.UI
             MarkDirtyRepaint();
         }
 
-        public void Clear()
+        public void ClearLevels()
         {
             System.Array.Clear(levels, 0, levels.Length);
             MarkDirtyRepaint();

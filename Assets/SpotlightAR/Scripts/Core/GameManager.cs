@@ -27,6 +27,7 @@ namespace SpotlightAR.Core
         [Header("Systems")]
         [SerializeField] ARSession arSession;
         [SerializeField] MicInput mic;
+        [SerializeField] SpeakerCheck speakerCheck;
         [SerializeField] StagePlacer stagePlacer;
         [SerializeField] TouchGestureInput gestures;
         [SerializeField] SongCatalog catalog;
@@ -46,6 +47,8 @@ namespace SpotlightAR.Core
         readonly MicCheck micCheck = new MicCheck();
         ScoreManager score;
         PlayerProfile profile;
+        SongDataService songData;
+        SongInsights currentInsights;
         PerformanceResult pendingResult;
         string selectedGenre = HomeScreen.ForYou;
         string searchQuery = string.Empty;
@@ -53,6 +56,9 @@ namespace SpotlightAR.Core
         float resultsAt = -1f;
         float noticeClearAt = -1f;
         bool showingTapHint;
+        string stageName;
+
+        const string StageNameKey = "stage_name";
 
         public GameState State { get; private set; } = GameState.Home;
         public Song SelectedSong { get; private set; }
@@ -65,6 +71,7 @@ namespace SpotlightAR.Core
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             score = new ScoreManager(scoring);
             profile = new PlayerProfile();
+            songData = new SongDataService();
         }
 
         void Start()
@@ -114,6 +121,15 @@ namespace SpotlightAR.Core
             setup.BackRequested += EnterHome;
             setup.StageSelected += SelectStage;
             setup.ContinueRequested += EnterPlacing;
+            setup.RecheckRequested += () => speakerCheck.Run();
+
+            stageName = PlayerPrefs.GetString(StageNameKey, string.Empty);
+            setup.SetStageName(stageName);
+            setup.StageNameChanged += value =>
+            {
+                stageName = value;
+                PlayerPrefs.SetString(StageNameKey, value);
+            };
         }
 
         void WirePlacement()
@@ -123,7 +139,11 @@ namespace SpotlightAR.Core
             placement.SizeSelected += size => { stagePlacer.SetSize(size); placement.SetSize(size); };
             placement.PlaceRequested += StartSession;
             stagePlacer.SurfaceChanged += _ => RefreshPlacement();
-            stagePlacer.StagePlaced += RefreshPlacement;
+            stagePlacer.StagePlaced += () =>
+            {
+                stagePlacer.Placed?.SetStageName(stageName);
+                RefreshPlacement();
+            };
         }
 
         void WireHud()
@@ -133,7 +153,7 @@ namespace SpotlightAR.Core
             hud.MoveRequested += () => { songPlayer.Pause(); EnterPlacing(); };
             hud.MicToggled += muted => mic.Muted = muted;
             hud.PauseToggled += SetPaused;
-            hud.FinaleRequested += () => stagePlacer.Placed?.PlayFinale();
+            hud.FinishRequested += () => EndSession(completed: true);
         }
 
         void WireResults()
@@ -146,8 +166,24 @@ namespace SpotlightAR.Core
         {
             catalog.GenreLoaded += (_, _, _) => RefreshHomeList();
             catalog.GenreFailed += (_, _) => RefreshHomeList();
+            speakerCheck.Changed += result =>
+            {
+                if (result == SpeakerCheck.Result.Headphones) micCheck.Reset();
+                ui.Setup.ShowHeadphoneCheck(result);
+            };
             songPlayer.StateChanged += OnPlaybackState;
             songPlayer.Failed += message => ShowNotice(message, 8f);
+            mic.RouteChanged += () =>
+            {
+                // Headphones plugged in or out: check again where the sound is going.
+                if (State == GameState.SongSetup) speakerCheck.Run();
+                else if (State == GameState.Singing)
+                {
+                    // Like music apps: pause so the song never blasts from the speaker into the mic.
+                    SetPaused(true);
+                    ShowNotice("Paused: your headphones changed. Put them back on, then tap play.", 6f);
+                }
+            };
             mic.PermissionDenied += () =>
             {
                 ShowNotice("Microphone access is off. Allow it in Settings so the stage can hear you.", 8f);
@@ -159,6 +195,10 @@ namespace SpotlightAR.Core
                 stagePlacer.Placed?.SetHype(hype);
                 ui.Hud.SetHype(hype);
                 ui.Hud.PulseScore();
+            };
+            mic.OnsetDetected += secondsAgo =>
+            {
+                if (State == GameState.Singing && songPlayer.IsPlaying) score.AddOnset(songPlayer.GetTime() - secondsAgo);
             };
             score.MilestoneReached += _ =>
             {
@@ -187,9 +227,12 @@ namespace SpotlightAR.Core
             micCheck.Reset();
             mic.StartListening();
             ui.Setup.SetSong(SelectedSong);
+            LookUpSongData(SelectedSong);
             SelectStage(Mathf.Clamp(selectedStage, 0, Mathf.Max(0, stageThemes.Count - 1)));
             ui.Show(ui.Setup);
             SetState(GameState.SongSetup);
+            // Headphones first (it needs silence), then the mic check.
+            speakerCheck.Run();
         }
 
         void EnterPlacing()
@@ -200,6 +243,7 @@ namespace SpotlightAR.Core
                 stagePlacer.SetStagePrefab(stageThemes[selectedStage].prefab);
                 ui.Placement.SetStageName(stageThemes[selectedStage].displayName);
             }
+            stagePlacer.Placed?.SetStageName(stageName);
             ui.Placement.SetSize(stagePlacer.Size);
             stagePlacer.BeginPlacement();
             ui.Show(ui.Placement);
@@ -223,7 +267,7 @@ namespace SpotlightAR.Core
             if (restart)
             {
                 songPlayer.Play(SelectedSong);
-                score.Begin();
+                score.Begin(currentInsights, StyleFor(SelectedSong));
                 stagePlacer.Placed?.SetHype(1);
                 ui.Hud.SetScore(0);
                 ui.Hud.SetHype(1);
@@ -255,7 +299,7 @@ namespace SpotlightAR.Core
             }
 
             stagePlacer.Placed?.PlayFinale();
-            pendingResult = score.BuildResult(SelectedSong.videoId, SelectedSong.title);
+            pendingResult = score.BuildResult(SelectedSong.videoId, SelectedSong.title, songPlayer.GetTime(), songPlayer.Duration);
             profile.SaveResult(pendingResult);
             songPlayer.Stop();
             ShowNotice(pendingResult.stars >= 4 ? "Encore! The crowd loved it." : "That's the end of the song!", ResultsDelay);
@@ -301,6 +345,7 @@ namespace SpotlightAR.Core
                 case GameState.SongSetup:
                     float level = mic.GetLoudness();
                     ui.Setup.PushMicLevel(level);
+                    if (!speakerCheck.Passed) break; // mic check waits for the headphone check
                     MicCheck.Result before = micCheck.Current;
                     if (micCheck.Update(level, Time.deltaTime) != before) ui.Setup.ShowMicResult(micCheck.Current);
                     break;
@@ -425,6 +470,25 @@ namespace SpotlightAR.Core
                 if (string.Equals(searchQuery, query, StringComparison.OrdinalIgnoreCase))
                     ui.Home.ShowError("YouTube search isn't available right now. Check your connection and try again.");
             }
+        }
+
+        static ScoreStyle StyleFor(Song song) =>
+            string.Equals(song.genre, "Rap", StringComparison.OrdinalIgnoreCase) ? ScoreStyle.Rap : ScoreStyle.Singing;
+
+        /// <summary>Fetch tempo and key for the song (cached after the first time) and show them on setup.</summary>
+        async void LookUpSongData(Song song)
+        {
+            currentInsights = null;
+            ScoreStyle style = StyleFor(song);
+            string judged = style == ScoreStyle.Rap ? "Judged on flow: staying on the beat" : "Judged on pitch: steady notes in key";
+            ui.Setup.SetInsights(judged);
+
+            SongInsights insights = await songData.Lookup(song);
+            if (SelectedSong != song) return; // the player picked another song meanwhile
+            currentInsights = insights;
+            if (style == ScoreStyle.Singing && insights.HasTempo) judged = "Judged on pitch and timing: steady notes, in key, on the beat";
+            string info = insights.Describe();
+            ui.Setup.SetInsights(string.IsNullOrEmpty(info) ? judged : $"{judged}\n{info}");
         }
 
         void SelectStage(int index)

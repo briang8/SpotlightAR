@@ -40,7 +40,19 @@ namespace SpotlightAR.Stages
         [SerializeField, Range(0f, 1f)] float sustainThreshold = 0.35f;
         [SerializeField] Vector2 poolIntensity = new Vector2(0.15f, 1.1f);
 
+        [Header("Moments")]
+        [Tooltip("Confetti fired when hype reaches x3 and at the finale.")]
+        [SerializeField] ConfettiBurst confettiPrefab;
+        [SerializeField] Vector3 confettiPosition = new Vector3(0f, 0.9f, 0.1f);
+
+        [Header("Name sign")]
+        [SerializeField] NameSign nameSignPrefab;
+        [Tooltip("Where the sign hangs, in stage units.")]
+        [SerializeField] Vector3 signPosition = new Vector3(0f, 1.2f, -0.35f);
+
         MaterialPropertyBlock poolBlock;
+        ConfettiBurst confetti;
+        NameSign sign;
 
         public string DisplayName => displayName;
 
@@ -60,6 +72,24 @@ namespace SpotlightAR.Stages
 
             poolBlock = new MaterialPropertyBlock();
             Level = idleLevel;
+
+            if (confettiPrefab != null)
+            {
+                confetti = Instantiate(confettiPrefab, transform);
+                confetti.transform.localPosition = confettiPosition;
+            }
+            if (nameSignPrefab != null)
+            {
+                sign = Instantiate(nameSignPrefab, transform);
+                sign.transform.localPosition = signPosition;
+                sign.SetColor(glowColor);
+            }
+        }
+
+        /// <summary>Shows the player's chosen stage name on the neon sign.</summary>
+        public void SetStageName(string stageName)
+        {
+            if (sign != null) sign.SetText(stageName);
         }
 
         protected virtual void Start() { }
@@ -95,6 +125,12 @@ namespace SpotlightAR.Stages
             Hype = clamped;
             if (crowd != null) crowd.SetHype(clamped);
             if (rising) foreach (StageLight stageLight in lights) stageLight.Flash();
+            if (rising && clamped == 3)
+            {
+                // The big hype moment: confetti and the whole crowd jumps.
+                if (confetti != null) confetti.Burst();
+                if (crowd != null) crowd.Cheer();
+            }
             OnHypeChanged(clamped);
         }
 
@@ -113,6 +149,7 @@ namespace SpotlightAR.Stages
         {
             foreach (StageLight stageLight in lights) stageLight.Flash();
             if (crowd != null) crowd.Cheer();
+            if (confetti != null) confetti.Burst();
         }
 
         /// <summary>Theme-specific effects (lasers, sparks, string lights...).</summary>

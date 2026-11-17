@@ -22,7 +22,14 @@ namespace SpotlightAR.Stages
         [Tooltip("Energy at which arms start going up.")]
         [SerializeField, Range(0f, 1f)] float armsUpThreshold = 0.55f;
 
+        [Header("Facing")]
+        [Tooltip("How much the fan turns toward the phone (0 = faces the stage, 1 = faces the phone).")]
+        [SerializeField, Range(0f, 1f)] float faceCamera = 0.75f;
+        [SerializeField] float turnSpeed = 3f;
+
         Vector3 figureRest;
+        Quaternion restRotation;
+        Transform viewer;
         float energy;
         float phase;
         float cheer;
@@ -32,7 +39,9 @@ namespace SpotlightAR.Stages
         {
             if (figure == null) figure = transform;
             figureRest = figure.localPosition;
+            restRotation = transform.localRotation;
             phase = Random.value * Mathf.PI * 2f;
+            if (Camera.main != null) viewer = Camera.main.transform;
         }
 
         public void SetEnergy(float value) => energy = Mathf.Clamp01(value);
@@ -56,6 +65,22 @@ namespace SpotlightAR.Stages
 
             if (leftArm != null) leftArm.localRotation = Quaternion.Euler(0f, 0f, angle + wave);
             if (rightArm != null) rightArm.localRotation = Quaternion.Euler(0f, 0f, -angle - wave);
+
+            TurnTowardViewer(dt);
+        }
+
+        /// <summary>Fans turn toward the phone as the player walks around the stage.</summary>
+        void TurnTowardViewer(float dt)
+        {
+            if (viewer == null || faceCamera <= 0f || transform.parent == null) return;
+
+            Vector3 toViewer = transform.parent.InverseTransformPoint(viewer.position) - transform.localPosition;
+            toViewer.y = 0f;
+            if (toViewer.sqrMagnitude < 1e-6f) return;
+
+            Quaternion facing = Quaternion.LookRotation(toViewer.normalized, Vector3.up);
+            Quaternion target = Quaternion.Slerp(restRotation, facing, faceCamera);
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, target, 1f - Mathf.Exp(-turnSpeed * dt));
         }
     }
 }

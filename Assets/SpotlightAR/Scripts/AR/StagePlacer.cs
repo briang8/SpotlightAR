@@ -23,6 +23,8 @@ namespace SpotlightAR.AR
 
         [Header("Placement")]
         [SerializeField] TouchGestureInput gestures;
+        [Tooltip("Place the stage so the player stands behind it like the performer, facing the crowd. Off = the stage front faces the player.")]
+        [SerializeField] bool performerView = true;
         [SerializeField] PlacementReticle reticle;
         [SerializeField] Stage stagePrefab;
 
@@ -122,7 +124,10 @@ namespace SpotlightAR.AR
 
             Vector3 toCamera = arCamera.transform.position - pose.position;
             toCamera.y = 0f;
-            Quaternion facing = toCamera.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(toCamera.normalized, Vector3.up) : pose.rotation;
+            // The crowd stands at the stage front. In performer view the front points away from
+            // the player, so they look over the stage at the crowd's faces.
+            Vector3 front = performerView ? -toCamera : toCamera;
+            Quaternion facing = front.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(front.normalized, Vector3.up) : pose.rotation;
             Placed.transform.SetPositionAndRotation(pose.position, facing);
             reticle.Hide();
             StagePlaced?.Invoke();

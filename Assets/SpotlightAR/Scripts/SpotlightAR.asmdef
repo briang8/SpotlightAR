@@ -3,6 +3,7 @@
     "rootNamespace": "SpotlightAR",
     "references": [
         "Unity.InputSystem",
+        "Unity.TextMeshPro",
         "Unity.XR.ARFoundation",
         "Unity.XR.ARSubsystems",
         "Unity.XR.CoreUtils",

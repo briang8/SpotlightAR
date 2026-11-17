@@ -24,11 +24,13 @@ namespace SpotlightAR.UI
         readonly VisualElement newBest;
         readonly Label coverageValue;
         readonly Label noteValue;
+        readonly Label noteLabel;
         readonly Label pitchValue;
         readonly Label pitchLabel;
         readonly Label hypeValue;
         readonly Label hypeLabel;
         readonly Label tip;
+        readonly Label keyLine;
         readonly Icon[] starIcons = new Icon[StarCount];
 
         IVisualElementScheduledItem countUp;
@@ -46,11 +48,13 @@ namespace SpotlightAR.UI
             newBest = Require<VisualElement>("results-new-best");
             coverageValue = Require<Label>("stat-coverage");
             noteValue = Require<Label>("stat-note");
+            noteLabel = Require<Label>("stat-note-label");
             pitchValue = Require<Label>("stat-pitch");
             pitchLabel = Require<Label>("stat-pitch-label");
             hypeValue = Require<Label>("stat-hype");
             hypeLabel = Require<Label>("stat-hype-label");
             tip = Require<Label>("results-tip");
+            keyLine = Require<Label>("results-key");
 
             Require<Button>("sing-again-button").clicked += () => SingAgainRequested?.Invoke();
             Require<Button>("new-song-button").clicked += () => NewSongRequested?.Invoke();
@@ -68,7 +72,9 @@ namespace SpotlightAR.UI
         public void ShowResult(PerformanceResult result)
         {
             headline.text = result.stars >= 4 ? "Encore!" : result.stars >= 2 ? "Nice show!" : "Warm-up done";
-            songTitle.text = result.songTitle;
+            songTitle.text = result.FinishedEarly
+                ? $"{result.songTitle} · finished at {Songs.TimeFormat.MinutesSeconds(result.secondsPlayed)} of {Songs.TimeFormat.MinutesSeconds(result.songDuration)}"
+                : result.songTitle;
 
             newBest.style.display = result.isNewBest && result.previousBest > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             best.text = result.isNewBest
@@ -76,15 +82,61 @@ namespace SpotlightAR.UI
                 : $"Your best: {result.previousBest:N0}";
 
             coverageValue.text = $"{Mathf.RoundToInt(result.coverage * 100f)}%";
-            noteValue.text = $"{result.longestNote:0.0}s";
-            pitchValue.text = result.HasSteadiness ? $"{Mathf.RoundToInt(result.steadiness * 100f)}%" : "–";
-            pitchLabel.text = result.HasSteadiness ? "pitch steadiness" : "hold a note to rate pitch";
+            if (result.style == ScoreStyle.Rap)
+            {
+                noteValue.text = $"{result.syllablesPerSecond:0.0}/s";
+                noteLabel.text = "flow speed (syllables)";
+                pitchValue.text = result.HasOnBeat ? Percent(result.onBeat) : "–";
+                pitchLabel.text = result.HasOnBeat ? $"on the beat ({result.bpm:0} BPM)" : "song tempo not found";
+            }
+            else
+            {
+                noteValue.text = $"{result.longestNote:0.0}s";
+                noteLabel.text = "longest steady note";
+                if (result.HasInKey)
+                {
+                    pitchValue.text = Percent(result.inKey);
+                    pitchLabel.text = result.HasSteadiness ? $"in the song's key · {Percent(result.steadiness)} steady" : "in the song's key";
+                }
+                else if (result.HasOwnKey)
+                {
+                    pitchValue.text = Percent(result.inOwnKey);
+                    pitchLabel.text = result.HasSteadiness ? $"stayed in one key · {Percent(result.steadiness)} steady" : "stayed in one key";
+                }
+                else
+                {
+                    pitchValue.text = result.HasSteadiness ? Percent(result.steadiness) : "–";
+                    pitchLabel.text = result.HasSteadiness ? "pitch steadiness" : "hold a note to rate pitch";
+                }
+            }
             hypeValue.text = $"x{result.peakHype}";
             hypeLabel.text = result.secondsAtMaxHype >= 1f ? $"peak hype · {result.secondsAtMaxHype:0}s at x3" : "peak crowd hype";
             tip.text = result.GetTip();
 
+            string keyText = KeyLine(result);
+            keyLine.text = keyText;
+            keyLine.style.display = string.IsNullOrEmpty(keyText) ? DisplayStyle.None : DisplayStyle.Flex;
+            keyLine.EnableInClassList("results__key--off", result.keyMatch == KeyMatch.Different);
+
             AnimateStars(result.stars);
             AnimateScore(result.score);
+        }
+
+        static string Percent(float value) => $"{Mathf.RoundToInt(value * 100f)}%";
+
+        /// <summary>Compares the key the player sang in with the song's key (singing only).</summary>
+        static string KeyLine(PerformanceResult result)
+        {
+            if (result.style == ScoreStyle.Rap || !result.HasSungKey) return string.Empty;
+            switch (result.keyMatch)
+            {
+                case KeyMatch.Match:
+                    return $"You sang in {result.sungKey}. The song is in {result.songKey}: same notes, you matched it ✓";
+                case KeyMatch.Different:
+                    return $"You sang in {result.sungKey}, but the song is in {result.songKey}. Different notes, so you were off key.";
+                default:
+                    return $"You sang in {result.sungKey}. We couldn't find this song's key, so look it up on Tunebat to compare.";
+            }
         }
 
         void AnimateStars(int earned)

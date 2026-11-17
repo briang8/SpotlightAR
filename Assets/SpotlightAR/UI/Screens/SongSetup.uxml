@@ -13,10 +13,13 @@
                 <ui:VisualElement class="setup__song-text">
                     <ui:Label name="setup-title" text="Golden Hour Drive" class="setup__title heading" />
                     <ui:Label name="setup-meta" text="The Lantern Kids · Pop · 3:42" class="setup__meta" />
+                    <ui:Label name="setup-insights" text="Judged on pitch" class="setup__insights t-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:Label text="Pick your stage" class="section-title heading heading--bold" />
             <ui:VisualElement name="stage-list" class="stage-list" />
+            <ui:Label text="Name your stage" class="field-label t-medium" />
+            <ui:TextField name="stage-name-field" max-length="16" class="name-field" />
             <ui:Label text="Mic check" class="section-title heading heading--bold" />
             <ui:VisualElement name="mic-panel" class="mic-panel">
                 <ui:VisualElement class="mic-panel__row">
@@ -25,6 +28,7 @@
                 </ui:VisualElement>
                 <SpotlightAR.UI.VoiceMeter name="setup-meter" bar-count="34" class="mic-panel__meter" />
                 <ui:Label name="mic-tip" text="Say or sing anything to test your mic." class="mic-panel__tip" />
+                <ui:Button name="recheck-button" text="Check again" class="secondary-button mic-panel__recheck t-semibold" />
             </ui:VisualElement>
         </ui:ScrollView>
         <ui:VisualElement class="setup__actions">

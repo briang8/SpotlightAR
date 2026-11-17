@@ -23,11 +23,17 @@ namespace SpotlightAR.UI
         readonly Label micTip;
         readonly Button continueButton;
         readonly Button skipButton;
+        readonly Button recheckButton;
         readonly List<Button> stageCards = new List<Button>();
+
+        bool headphonesOk;
+        MicCheck.Result micResult = MicCheck.Result.Listening;
 
         public event Action BackRequested;
         public event Action<int> StageSelected;
         public event Action ContinueRequested;
+        public event Action RecheckRequested;
+        public event Action<string> StageNameChanged;
 
         public SongSetupScreen(VisualElement root) : base(root)
         {
@@ -41,10 +47,53 @@ namespace SpotlightAR.UI
             micTip = Require<Label>("mic-tip");
             continueButton = Require<Button>("continue-button");
             skipButton = Require<Button>("skip-mic-button");
+            recheckButton = Require<Button>("recheck-button");
 
             Require<Button>("back-button").clicked += () => BackRequested?.Invoke();
             continueButton.clicked += () => ContinueRequested?.Invoke();
             skipButton.clicked += () => ContinueRequested?.Invoke();
+            recheckButton.clicked += () => RecheckRequested?.Invoke();
+
+            nameField = Require<TextField>("stage-name-field");
+            nameField.textEdition.placeholder = "Spotlight";
+            nameField.textEdition.hidePlaceholderOnFocus = true;
+            nameField.RegisterValueChangedCallback(evt => StageNameChanged?.Invoke(evt.newValue));
+        }
+
+        readonly TextField nameField;
+
+        public void SetStageName(string stageName) => nameField.SetValueWithoutNotify(stageName ?? string.Empty);
+
+        /// <summary>What the song is judged on, plus tempo/key when known.</summary>
+        public void SetInsights(string text) => Require<Label>("setup-insights").text = text;
+
+        /// <summary>Show the headphone check. The mic check only starts once headphones pass.</summary>
+        public void ShowHeadphoneCheck(SpeakerCheck.Result result)
+        {
+            headphonesOk = result == SpeakerCheck.Result.Headphones;
+            micPanel.EnableInClassList("mic-panel--help", result == SpeakerCheck.Result.Speaker || result == SpeakerCheck.Result.NoMic);
+            micPanel.EnableInClassList("mic-panel--heard", false);
+            recheckButton.style.display = result == SpeakerCheck.Result.Speaker || result == SpeakerCheck.Result.NoMic ? DisplayStyle.Flex : DisplayStyle.None;
+
+            switch (result)
+            {
+                case SpeakerCheck.Result.Running:
+                    micStatus.text = "Checking your headphones…";
+                    micTip.text = "Stay quiet for a second while we listen for three beeps.";
+                    break;
+                case SpeakerCheck.Result.Speaker:
+                    micStatus.text = "Sound is coming from a speaker";
+                    micTip.text = "Connect headphones (wired or Bluetooth) so the mic only hears you, not the song. Then tap Check again.";
+                    break;
+                case SpeakerCheck.Result.NoMic:
+                    micStatus.text = "No microphone access";
+                    micTip.text = "Allow microphone access for Spotlight AR in your phone's Settings, then tap Check again.";
+                    break;
+                case SpeakerCheck.Result.Headphones:
+                    ShowMicResult(micResult);
+                    return;
+            }
+            UpdateButtons();
         }
 
         public void SetSong(Song song)
@@ -54,7 +103,7 @@ namespace SpotlightAR.UI
             cover.style.backgroundImage = StyleKeyword.None;
             cover.RemoveFromClassList("cover--loaded");
             CoverImages.Apply(cover, song.GetCoverUrl());
-            meter.Clear();
+            meter.ClearLevels();
             ShowMicResult(MicCheck.Result.Listening);
         }
 
@@ -100,26 +149,47 @@ namespace SpotlightAR.UI
 
         public void ShowMicResult(MicCheck.Result result)
         {
+            micResult = result;
+            if (!headphonesOk)
+            {
+                UpdateButtons();
+                return;
+            }
+
             micPanel.EnableInClassList("mic-panel--heard", result == MicCheck.Result.Heard);
             micPanel.EnableInClassList("mic-panel--help", result == MicCheck.Result.NeedsHelp);
-            continueButton.SetEnabled(result == MicCheck.Result.Heard);
-            skipButton.style.display = result == MicCheck.Result.NeedsHelp ? DisplayStyle.Flex : DisplayStyle.None;
+            recheckButton.style.display = DisplayStyle.None;
+            UpdateButtons();
 
             switch (result)
             {
                 case MicCheck.Result.Heard:
-                    micStatus.text = "We can hear you!";
-                    micTip.text = "Headphones keep the song out of the mic for a fairer score.";
+                    micStatus.text = "Headphones on, and we can hear you!";
+                    micTip.text = "You're ready. Find a floor or table for your stage.";
                     break;
                 case MicCheck.Result.NeedsHelp:
                     micStatus.text = "Can't hear you yet";
                     micTip.text = "Sing a little louder or hold the phone closer. Check the app has microphone access, and turn the media volume up.";
                     break;
                 default:
-                    micStatus.text = "Mic check: sing a line";
+                    micStatus.text = "Headphones on. Now sing a line";
                     micTip.text = "Say or sing anything to test your mic.";
                     break;
             }
+        }
+
+        void UpdateButtons()
+        {
+#if UNITY_EDITOR
+            // Laptops usually play through speakers, so the Editor can always skip the checks.
+            const bool editor = true;
+#else
+            const bool editor = false;
+#endif
+            continueButton.SetEnabled(headphonesOk && micResult == MicCheck.Result.Heard);
+            bool canSkipMic = headphonesOk && micResult == MicCheck.Result.NeedsHelp;
+            skipButton.text = editor && !canSkipMic ? "Skip checks (Editor only)" : "Continue without mic check";
+            skipButton.style.display = canSkipMic || editor ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 }

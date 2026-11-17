@@ -33,6 +33,16 @@ namespace SpotlightAR.Scoring
         public float wobbleForZero = 60f;
         public float heldNoteBonusPerSecond = 6f;
 
+        [Header("Rhythm (rap) and key (singing)")]
+        [Tooltip("Bonus points for each 8-second stretch of rapping on the beat (scaled by how on-beat it was and by hype).")]
+        public float rhythmBonusPerWindow = 40f;
+        [Tooltip("Share of random notes that land in a key by chance; in-key scores are measured above this.")]
+        [Range(0f, 1f)] public float inKeyByChance = 0.58f;
+        [Tooltip("Same idea when the song's key is unknown and the player is judged on staying in their own best-fitting key (higher, since the best of 12 keys is picked).")]
+        [Range(0f, 1f)] public float ownKeyByChance = 0.72f;
+        [Tooltip("When a sung song's tempo is known, how much of the pitch skill score comes from timing on the beat.")]
+        [Range(0f, 1f)] public float singingRhythmWeight = 0.25f;
+
         [Header("Milestones and stars")]
         [Tooltip("The crowd cheers every time the score passes a multiple of this.")]
         public int milestoneStep = 500;

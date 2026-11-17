@@ -115,6 +115,19 @@
     white-space: normal;
 }
 
+.results__key {
+    margin: 26px 0 0 0;
+    padding: 0 8px;
+    color: var(--c-green);
+    font-size: 29px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+}
+
+.results__key--off {
+    color: var(--c-danger);
+}
+
 .results__tip {
     margin: 30px 0 36px 0;
     padding: 26px 32px;
