@@ -19,33 +19,48 @@ namespace SpotlightAR.Stages
         [SerializeField, Range(0f, 1f)] float flicker = 0.08f;
 
         TextMeshPro text;
+        TextMeshPro backText;
         Material material;
         float nextFlicker;
 
         void Awake()
         {
-            var textObject = new GameObject("Neon Text");
-            textObject.transform.SetParent(transform, false);
-            textObject.transform.localPosition = new Vector3(0f, 0f, 0.012f);
-            textObject.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); // read from the front of the stage
-
-            text = textObject.AddComponent<TextMeshPro>();
-            if (font != null) text.font = font;
-            text.rectTransform.sizeDelta = textArea;
-            text.alignment = TextAlignmentOptions.Center;
-            text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.enableAutoSizing = true;
-            text.fontSizeMin = 0.05f;
-            text.fontSizeMax = 1.2f;
-            text.fontStyle = FontStyles.UpperCase;
-            text.characterSpacing = 4f;
-
+            // Double-sided: the crowd reads it from the front, and the player standing behind
+            // the stage (performer view) reads it from the back. Both faces share one material.
+            text = CreateText("Neon Text (crowd side)", 0.012f, 180f);
             material = text.fontMaterial; // per-sign instance
             material.EnableKeyword(ShaderUtilities.Keyword_Glow);
+            backText = CreateText("Neon Text (performer side)", -0.012f, 0f);
+            backText.fontSharedMaterial = material;
             ApplyColor();
         }
 
-        public void SetText(string value) => text.text = string.IsNullOrWhiteSpace(value) ? "Spotlight" : value.Trim();
+        TextMeshPro CreateText(string objectName, float z, float yaw)
+        {
+            var textObject = new GameObject(objectName);
+            textObject.transform.SetParent(transform, false);
+            textObject.transform.localPosition = new Vector3(0f, 0f, z);
+            textObject.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+
+            var label = textObject.AddComponent<TextMeshPro>();
+            if (font != null) label.font = font;
+            label.rectTransform.sizeDelta = textArea;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 0.05f;
+            label.fontSizeMax = 1.2f;
+            label.fontStyle = FontStyles.UpperCase;
+            label.characterSpacing = 4f;
+            return label;
+        }
+
+        public void SetText(string value)
+        {
+            string shown = string.IsNullOrWhiteSpace(value) ? "Spotlight" : value.Trim();
+            text.text = shown;
+            backText.text = shown;
+        }
 
         public void SetColor(Color color)
         {
@@ -56,6 +71,7 @@ namespace SpotlightAR.Stages
         void ApplyColor()
         {
             text.color = Color.Lerp(glowColor, Color.white, 0.65f); // hot white core like a neon tube
+            if (backText != null) backText.color = text.color;
             material.SetColor(ShaderUtilities.ID_GlowColor, glowColor);
             material.SetFloat(ShaderUtilities.ID_GlowPower, glowPower);
             material.SetFloat(ShaderUtilities.ID_GlowOuter, 0.7f);

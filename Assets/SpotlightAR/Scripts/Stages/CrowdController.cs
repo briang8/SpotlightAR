@@ -28,6 +28,7 @@ namespace SpotlightAR.Stages
             int clamped = Mathf.Clamp(value, 1, 3);
             if (clamped > hype) Cheer();
             hype = clamped;
+            foreach (CrowdMember member in members) member.SetHype(hype);
         }
 
         /// <summary>Live show energy, 0..1, usually the smoothed voice level.</summary>
