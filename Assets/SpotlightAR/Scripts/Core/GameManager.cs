@@ -47,8 +47,6 @@ namespace SpotlightAR.Core
         readonly MicCheck micCheck = new MicCheck();
         ScoreManager score;
         PlayerProfile profile;
-        SongDataService songData;
-        SongInsights currentInsights;
         PerformanceResult pendingResult;
         string selectedGenre = HomeScreen.ForYou;
         string searchQuery = string.Empty;
@@ -59,6 +57,13 @@ namespace SpotlightAR.Core
         string stageName;
 
         const string StageNameKey = "stage_name";
+        const string StageIndexKey = "stage_index";
+        const string SignColorKey = "sign_color";
+
+        PerformanceHistory history;
+        int signColor;
+        readonly Dictionary<int, RenderTexture> stagePreviews = new Dictionary<int, RenderTexture>();
+        bool previewsStarted;
 
         // Sing mode: the original song quietly underneath time-synced lyrics.
         SingModeService singMode;
@@ -86,8 +91,10 @@ namespace SpotlightAR.Core
             Screen.sleepTimeout = SleepTimeout.NeverSleep;
             score = new ScoreManager(scoring);
             profile = new PlayerProfile();
-            songData = new SongDataService();
             singMode = new SingModeService(catalog.FindOriginal);
+            history = new PerformanceHistory();
+            selectedStage = PlayerPrefs.GetInt(StageIndexKey, 0);
+            signColor = Mathf.Clamp(PlayerPrefs.GetInt(SignColorKey, 0), 0, StagesPage.SignColors.Length - 1);
         }
 
         void Start()
@@ -129,6 +136,27 @@ namespace SpotlightAR.Core
                 SelectedSong = song;
                 EnterSetup();
             };
+            home.Library.SongChosen += song =>
+            {
+                SelectedSong = song;
+                EnterSetup();
+            };
+            home.TabChanged += tab =>
+            {
+                if (tab == HomeTab.Library) home.Library.Show(history);
+                if (tab == HomeTab.Stages) ShowStagesTab();
+            };
+            home.Stages.StageChosen += index =>
+            {
+                SelectStage(index);
+                ShowStagesTab();
+            };
+            home.Stages.SignColorChosen += index =>
+            {
+                signColor = index;
+                PlayerPrefs.SetInt(SignColorKey, index);
+                ShowStagesTab();
+            };
         }
 
         void WireSetup()
@@ -159,6 +187,7 @@ namespace SpotlightAR.Core
             stagePlacer.StagePlaced += () =>
             {
                 stagePlacer.Placed?.SetStageName(stageName);
+                ApplySignColor();
                 RefreshPlacement();
             };
         }
@@ -219,10 +248,6 @@ namespace SpotlightAR.Core
                 ui.Hud.SetHype(hype);
                 ui.Hud.PulseScore();
             };
-            mic.OnsetDetected += secondsAgo =>
-            {
-                if (State == GameState.Singing && songPlayer.IsPlaying) score.AddOnset(songPlayer.GetTime() - secondsAgo);
-            };
             score.MilestoneReached += _ =>
             {
                 stagePlacer.Placed?.OnMilestone();
@@ -240,6 +265,9 @@ namespace SpotlightAR.Core
             resultsAt = -1f;
             ui.Show(ui.Home);
             RefreshHomeList();
+            // A tab left open shows fresh data (a new show in the Library, a new best on a stage).
+            if (ui.Home.Tab == HomeTab.Library) ui.Home.Library.Show(history);
+            else if (ui.Home.Tab == HomeTab.Stages) ShowStagesTab();
             SetState(GameState.Home);
         }
 
@@ -250,7 +278,6 @@ namespace SpotlightAR.Core
             micCheck.Reset();
             mic.StartListening();
             ui.Setup.SetSong(SelectedSong);
-            LookUpSongData(SelectedSong);
             LookUpLyrics(SelectedSong);
             SelectStage(Mathf.Clamp(selectedStage, 0, Mathf.Max(0, stageThemes.Count - 1)));
             ui.Show(ui.Setup);
@@ -292,7 +319,7 @@ namespace SpotlightAR.Core
             {
                 songPlayer.SetVolume(SongVolume);
                 songPlayer.Play(PlayingSong);
-                score.Begin(currentInsights, StyleFor(SelectedSong));
+                score.Begin();
                 stagePlacer.Placed?.SetHype(1);
                 ui.Hud.SetScore(0);
                 ui.Hud.SetHype(1);
@@ -329,6 +356,7 @@ namespace SpotlightAR.Core
             stagePlacer.Placed?.PlayFinale();
             pendingResult = score.BuildResult(SelectedSong.videoId, SelectedSong.title, songPlayer.GetTime(), songPlayer.Duration);
             profile.SaveResult(pendingResult);
+            history.Add(SelectedSong, pendingResult, CurrentStageName, singSelected && singLyrics != null);
             songPlayer.Stop();
             ShowNotice(pendingResult.stars >= 4 ? "Encore! The crowd loved it." : "That's the end of the song!", ResultsDelay);
             resultsAt = Time.time + ResultsDelay;
@@ -413,6 +441,7 @@ namespace SpotlightAR.Core
             {
                 score.AddFrame(loudness, mic.GetPitch(), Time.deltaTime);
                 ui.Hud.SetScore(score.Score);
+                ui.Hud.SetLiveNote(score.LiveNote);
             }
 
             ui.Hud.Tick(loudness, Time.deltaTime);
@@ -420,8 +449,8 @@ namespace SpotlightAR.Core
 
             if (singSelected && singLyrics != null)
             {
-                singLyrics.Get(songPlayer.GetTime(), out string previous, out string current, out float progress, out string next);
-                ui.Hud.SetLyrics(previous, current, progress, next);
+                singLyrics.Get(songPlayer.GetTime(), out string previous, out string current, out float progress, out string next, out string afterNext);
+                ui.Hud.SetLyrics(previous, current, progress, next, afterNext);
             }
 
             bool showVideo = State == GameState.Singing || State == GameState.Paused;
@@ -506,9 +535,6 @@ namespace SpotlightAR.Core
             }
         }
 
-        static ScoreStyle StyleFor(Song song) =>
-            string.Equals(song.genre, "Rap", StringComparison.OrdinalIgnoreCase) ? ScoreStyle.Rap : ScoreStyle.Singing;
-
         /// <summary>Checks for synced lyrics (free, cached). Sing mode can only be picked when they exist.</summary>
         async void LookUpLyrics(Song song)
         {
@@ -565,27 +591,41 @@ namespace SpotlightAR.Core
             ui.Setup.SetMode(true, true, SingCaption);
         }
 
-        /// <summary>Fetch tempo and key for the song (cached after the first time) and show them on setup.</summary>
-        async void LookUpSongData(Song song)
-        {
-            currentInsights = null;
-            ScoreStyle style = StyleFor(song);
-            string judged = style == ScoreStyle.Rap ? "Judged on flow: staying on the beat" : "Judged on pitch: steady notes in key";
-            ui.Setup.SetInsights(judged);
-
-            SongInsights insights = await songData.Lookup(song);
-            if (SelectedSong != song) return; // the player picked another song meanwhile
-            currentInsights = insights;
-            if (style == ScoreStyle.Singing && insights.HasTempo) judged = "Judged on pitch and timing: steady notes, in key, on the beat";
-            string info = insights.Describe();
-            ui.Setup.SetInsights(string.IsNullOrEmpty(info) ? judged : $"{judged}\n{info}");
-        }
-
         void SelectStage(int index)
         {
             if (index < 0 || index >= stageThemes.Count || !stageThemes[index].IsAvailable) return;
             selectedStage = index;
             ui.Setup.SetSelectedStage(index);
+            PlayerPrefs.SetInt(StageIndexKey, index);
+        }
+
+        string CurrentStageName => selectedStage >= 0 && selectedStage < stageThemes.Count ? stageThemes[selectedStage].displayName : "Stage";
+
+        void ShowStagesTab()
+        {
+            ui.Home.Stages.Show(stageThemes, selectedStage, history, signColor);
+            foreach (var preview in stagePreviews) ui.Home.Stages.SetPreview(preview.Key, preview.Value);
+            if (!previewsStarted) RenderStagePreviews();
+        }
+
+        /// <summary>Photographs each stage once for the Stages tab, one after another.</summary>
+        async void RenderStagePreviews()
+        {
+            previewsStarted = true;
+            for (int i = 0; i < stageThemes.Count; i++)
+            {
+                if (!stageThemes[i].IsAvailable) continue;
+                RenderTexture texture = await StagePreviewRenderer.Render(stageThemes[i].prefab, 960, 560, new Color(0.086f, 0.071f, 0.075f), stageName);
+                if (texture == null) continue;
+                stagePreviews[i] = texture;
+                ui.Home.Stages.SetPreview(i, texture);
+            }
+        }
+
+        /// <summary>The neon sign colour chosen on the Stages tab (index 0 keeps the stage's own colour).</summary>
+        void ApplySignColor()
+        {
+            if (signColor > 0) stagePlacer.Placed?.SetSignColor(StagesPage.SignColors[signColor].color);
         }
 
         void RefreshPlacement() => ui.Placement.SetSurface(stagePlacer.Surface, stagePlacer.Placed != null);

@@ -89,9 +89,6 @@ namespace SpotlightAR.UI
 
         public void SetStageName(string stageName) => nameField.SetValueWithoutNotify(stageName ?? string.Empty);
 
-        /// <summary>What the song is judged on, plus tempo/key when known.</summary>
-        public void SetInsights(string text) => Require<Label>("setup-insights").text = text;
-
         /// <summary>Show the headphone check. The mic check only starts once headphones pass.</summary>
         public void ShowHeadphoneCheck(SpeakerCheck.Result result)
         {

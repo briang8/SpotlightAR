@@ -13,7 +13,7 @@
                 <ui:VisualElement class="setup__song-text">
                     <ui:Label name="setup-title" text="Golden Hour Drive" class="setup__title heading" />
                     <ui:Label name="setup-meta" text="The Lantern Kids · Pop · 3:42" class="setup__meta" />
-                    <ui:Label name="setup-insights" text="Judged on pitch" class="setup__insights t-semibold" />
+                    <ui:Label name="setup-insights" text="The crowd reacts to your voice" class="setup__insights t-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:Label text="Pick your stage" class="section-title heading heading--bold" />
