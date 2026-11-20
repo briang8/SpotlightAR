@@ -883,15 +883,13 @@ MonoBehaviour:
     fullCreditLoudness: 0.55
     pointsPerSecond: 10
     hypeRise: 0.06
-    hypeFall: 0.12
-    silenceGrace: 1.5
+    hypeFall: 0.3
+    silenceGrace: 0.8
     hypeLevels: {x: 0.4, y: 0.8}
-    heldNoteSeconds: 0.5
-    sameNoteCents: 150
-    wobbleForZero: 60
+    liveNoteSeconds: 0.25
+    heldNoteSeconds: 0.8
+    sameNoteCents: 80
     heldNoteBonusPerSecond: 6
-    rhythmBonusPerWindow: 40
-    inKeyByChance: 0.58
     milestoneStep: 500
     fullCoverage: 0.7
     starThresholds:

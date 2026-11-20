@@ -53,32 +53,6 @@
     background-color: var(--c-overlay);
 }
 
-.round-button--primary,
-.round-button--primary:hover,
-.round-button--primary:focus {
-    border-width: 0;
-    background-color: var(--c-accent);
-}
-
-.round-button--primary:active {
-    background-color: var(--c-accent-pressed);
-}
-
-.round-button--primary .icon {
-    color: var(--c-on-accent);
-}
-
-.round-button--success,
-.round-button--success:hover,
-.round-button--success:focus {
-    border-width: 0;
-    background-color: var(--c-green);
-}
-
-.round-button--success .icon {
-    color: var(--c-on-green);
-}
-
 .round-button--off .icon {
     color: var(--c-danger);
 }

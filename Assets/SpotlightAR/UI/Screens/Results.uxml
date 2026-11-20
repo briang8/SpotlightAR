@@ -11,40 +11,13 @@
                     <ui:Label text="NEW BEST" class="results__badge-text t-caps" />
                 </ui:VisualElement>
                 <ui:Label name="results-best" text="Your best: 0" class="results__best t-medium" />
-                <ui:VisualElement class="stats">
-                    <ui:VisualElement class="stat">
-                        <ui:Label name="stat-coverage" text="0%" class="stat__value heading--bold" />
-                        <ui:Label text="of the song sung" class="stat__label" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="stat">
-                        <ui:Label name="stat-note" text="0.0s" class="stat__value heading--bold" />
-                        <ui:Label name="stat-note-label" text="longest steady note" class="stat__label" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="stat">
-                        <ui:Label name="stat-pitch" text="–" class="stat__value heading--bold" />
-                        <ui:Label name="stat-pitch-label" text="pitch steadiness" class="stat__label" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="stat">
-                        <ui:Label name="stat-hype" text="x1" class="stat__value heading--bold" />
-                        <ui:Label name="stat-hype-label" text="peak crowd hype" class="stat__label" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement name="results-key-row" class="note-row note-row--key">
+                <ui:VisualElement class="note-row note-row--praise">
                     <ui:VisualElement class="note-row__badge">
-                        <SpotlightAR.UI.Icon name="results-key-icon" glyph="Check" />
+                        <SpotlightAR.UI.Icon glyph="Spotlight" />
                     </ui:VisualElement>
                     <ui:VisualElement class="note-row__text">
-                        <ui:Label name="results-key-title" text="IN KEY" class="note-row__title t-caps" />
-                        <ui:Label name="results-key" text="You sang in C minor." class="note-row__body" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement class="note-row note-row--tip">
-                    <ui:VisualElement class="note-row__badge">
-                        <SpotlightAR.UI.Icon glyph="StarFilled" />
-                    </ui:VisualElement>
-                    <ui:VisualElement class="note-row__text">
-                        <ui:Label text="TIP" class="note-row__title t-caps" />
-                        <ui:Label name="results-tip" text="Tip" class="note-row__body" />
+                        <ui:Label name="results-hype" text="THE CROWD · PEAK HYPE X3" class="note-row__title t-caps" />
+                        <ui:Label name="results-reaction" text="The crowd was with you the whole way." class="note-row__body" />
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement class="results__actions">

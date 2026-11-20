@@ -83,34 +83,7 @@
     -unity-text-align: middle-center;
 }
 
-.stats {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-top: 36px;
-}
-
-/* One tile per stat: the tile carries the fill, so value and label sit on one surface. */
-.stat {
-    width: 48.8%;
-    margin-bottom: 20px;
-    padding: 26px 32px;
-    border-radius: 40px;
-    background-color: var(--c-fill);
-}
-
-.stat__value {
-    font-size: 58px;
-}
-
-.stat__label {
-    margin-top: 2px;
-    font-size: 27px;
-    color: var(--c-muted);
-    white-space: normal;
-}
-
-/* Key result and coaching tip: quiet rows with an icon and a small label. */
+/* The crowd reaction row: an icon badge, a small label and one sentence. */
 .note-row {
     flex-direction: row;
     align-items: flex-start;
@@ -152,41 +125,6 @@
     white-space: normal;
 }
 
-.note-row--off .note-row__badge {
-    background-color: var(--c-danger);
-}
-
-.note-row--off .note-row__title {
-    color: var(--c-danger);
-}
-
-.note-row--unknown .note-row__badge {
-    background-color: var(--c-border);
-}
-
-.note-row--unknown .note-row__badge .icon {
-    color: var(--c-text);
-}
-
-.note-row--unknown .note-row__title {
-    color: var(--c-muted);
-}
-
-.note-row--tip {
-    background-color: var(--c-hi-tint);
-}
-
-.note-row--tip .note-row__badge {
-    background-color: var(--c-hi);
-}
-
-.note-row--tip .note-row__badge .icon {
-    color: var(--c-on-accent);
-}
-
-.note-row--tip .note-row__title {
-    color: var(--c-hi);
-}
 
 .results__actions {
     flex-direction: row;
@@ -197,4 +135,29 @@
 .results__primary {
     min-width: 0;
     margin-right: 20px;
+}
+
+/* Praise row: green tint, the counterpart of the coral tip. */
+.note-row--praise {
+    background-color: var(--c-green-tint);
+}
+
+/* Cards for the skill bars and the pitch graph. */
+.panel-card {
+    margin-top: 20px;
+    padding: 32px 36px 30px 36px;
+    border-radius: 44px;
+    background-color: var(--c-fill);
+}
+
+.panel-card__title {
+    color: var(--c-muted);
+    margin-bottom: 14px;
+}
+
+.graph-caption {
+    margin-top: 8px;
+    font-size: 25px;
+    color: var(--c-muted);
+    white-space: normal;
 }

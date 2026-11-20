@@ -6,8 +6,8 @@ using UnityEngine.UIElements;
 namespace SpotlightAR.UI
 {
     /// <summary>
-    /// Results (flowchart: "Results: stars and score"): stars, a counting-up score,
-    /// best score, coaching stats and a tip, then "Sing again" or "Pick a new song".
+    /// Results (flowchart: "Results: stars and score"): stars, a counting-up score, best score
+    /// and how the crowd took it. Kept simple on purpose: the app is about having fun on stage.
     /// Shown over the AR view so the stage's finale stays visible behind it.
     /// </summary>
     public sealed class ResultsScreen : UIScreen
@@ -22,18 +22,8 @@ namespace SpotlightAR.UI
         readonly Label score;
         readonly Label best;
         readonly VisualElement newBest;
-        readonly Label coverageValue;
-        readonly Label noteValue;
-        readonly Label noteLabel;
-        readonly Label pitchValue;
-        readonly Label pitchLabel;
-        readonly Label hypeValue;
-        readonly Label hypeLabel;
-        readonly Label tip;
-        readonly Label keyLine;
-        readonly VisualElement keyRow;
-        readonly Label keyTitle;
-        readonly Icon keyIcon;
+        readonly Label hype;
+        readonly Label reaction;
         readonly Icon[] starIcons = new Icon[StarCount];
 
         IVisualElementScheduledItem countUp;
@@ -49,18 +39,8 @@ namespace SpotlightAR.UI
             score = Require<Label>("results-score");
             best = Require<Label>("results-best");
             newBest = Require<VisualElement>("results-new-best");
-            coverageValue = Require<Label>("stat-coverage");
-            noteValue = Require<Label>("stat-note");
-            noteLabel = Require<Label>("stat-note-label");
-            pitchValue = Require<Label>("stat-pitch");
-            pitchLabel = Require<Label>("stat-pitch-label");
-            hypeValue = Require<Label>("stat-hype");
-            hypeLabel = Require<Label>("stat-hype-label");
-            tip = Require<Label>("results-tip");
-            keyLine = Require<Label>("results-key");
-            keyRow = Require<VisualElement>("results-key-row");
-            keyTitle = Require<Label>("results-key-title");
-            keyIcon = Require<Icon>("results-key-icon");
+            hype = Require<Label>("results-hype");
+            reaction = Require<Label>("results-reaction");
 
             Require<Button>("sing-again-button").clicked += () => SingAgainRequested?.Invoke();
             Require<Button>("new-song-button").clicked += () => NewSongRequested?.Invoke();
@@ -87,75 +67,13 @@ namespace SpotlightAR.UI
                 ? result.previousBest > 0 ? $"+{result.score - result.previousBest:N0} on your best" : "First time on this song: best saved"
                 : $"Your best: {result.previousBest:N0}";
 
-            coverageValue.text = $"{Mathf.RoundToInt(result.coverage * 100f)}%";
-            if (result.style == ScoreStyle.Rap)
-            {
-                noteValue.text = $"{result.syllablesPerSecond:0.0}/s";
-                noteLabel.text = "flow speed (syllables)";
-                pitchValue.text = result.HasOnBeat ? Percent(result.onBeat) : "–";
-                pitchLabel.text = result.HasOnBeat ? $"on the beat ({result.bpm:0} BPM)" : "song tempo not found";
-            }
-            else
-            {
-                noteValue.text = $"{result.longestNote:0.0}s";
-                noteLabel.text = "longest steady note";
-                if (result.HasInKey)
-                {
-                    pitchValue.text = Percent(result.inKey);
-                    pitchLabel.text = result.HasSteadiness ? $"in the song's key · {Percent(result.steadiness)} steady" : "in the song's key";
-                }
-                else if (result.HasOwnKey)
-                {
-                    pitchValue.text = Percent(result.inOwnKey);
-                    pitchLabel.text = result.HasSteadiness ? $"stayed in one key · {Percent(result.steadiness)} steady" : "stayed in one key";
-                }
-                else
-                {
-                    pitchValue.text = result.HasSteadiness ? Percent(result.steadiness) : "–";
-                    pitchLabel.text = result.HasSteadiness ? "pitch steadiness" : "hold a note to rate pitch";
-                }
-            }
-            hypeValue.text = $"x{result.peakHype}";
-            hypeLabel.text = result.secondsAtMaxHype >= 1f ? $"peak hype · {result.secondsAtMaxHype:0}s at x3" : "peak crowd hype";
-            tip.text = result.GetTip();
-
-            string keyText = KeyLine(result);
-            keyLine.text = keyText;
-            keyRow.style.display = string.IsNullOrEmpty(keyText) ? DisplayStyle.None : DisplayStyle.Flex;
-            keyRow.EnableInClassList("note-row--off", result.keyMatch == KeyMatch.Different);
-            keyRow.EnableInClassList("note-row--unknown", result.keyMatch == KeyMatch.Unknown);
-            keyTitle.text = result.keyMatch switch
-            {
-                KeyMatch.Match => "IN KEY",
-                KeyMatch.Different => "OFF KEY",
-                _ => "YOUR KEY"
-            };
-            keyIcon.Glyph = result.keyMatch switch
-            {
-                KeyMatch.Match => IconGlyph.Check,
-                KeyMatch.Different => IconGlyph.Close,
-                _ => IconGlyph.Music
-            };
+            hype.text = result.secondsAtMaxHype >= 1f
+                ? $"THE CROWD · PEAK HYPE X{result.peakHype} · {result.secondsAtMaxHype:0}S AT X3"
+                : $"THE CROWD · PEAK HYPE X{result.peakHype}";
+            reaction.text = result.CrowdReaction();
 
             AnimateStars(result.stars);
             AnimateScore(result.score);
-        }
-
-        static string Percent(float value) => $"{Mathf.RoundToInt(value * 100f)}%";
-
-        /// <summary>Compares the key the player sang in with the song's key (singing only).</summary>
-        static string KeyLine(PerformanceResult result)
-        {
-            if (result.style == ScoreStyle.Rap || !result.HasSungKey) return string.Empty;
-            switch (result.keyMatch)
-            {
-                case KeyMatch.Match:
-                    return $"You sang in {result.sungKey}, the same notes as the song ({result.songKey}).";
-                case KeyMatch.Different:
-                    return $"You sang in {result.sungKey}, but the song is in {result.songKey}.";
-                default:
-                    return $"You sang in {result.sungKey}. We couldn't find this song's key, so look it up on Tunebat to compare.";
-            }
         }
 
         void AnimateStars(int earned)
