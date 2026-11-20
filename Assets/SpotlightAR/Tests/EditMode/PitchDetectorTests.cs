@@ -90,5 +90,14 @@ namespace SpotlightAR.Tests
             }
             return samples;
         }
+
+        [TestCase(440f, "A4")]
+        [TestCase(261.63f, "C4")]
+        [TestCase(277.18f, "C♯4")]
+        [TestCase(110f, "A2")]
+        public void NamesTheNoteOnScreen(float hz, string expected)
+        {
+            Assert.That(PitchDetector.NoteName((int)Math.Round(PitchDetector.MidiNote(hz))), Is.EqualTo(expected));
+        }
     }
 }

@@ -89,5 +89,13 @@ namespace SpotlightAR.Audio
         /// <summary>Distance between two frequencies in cents (100 cents = 1 semitone).</summary>
         public static float Cents(float frequency, float reference) =>
             1200f * (float)Math.Log(frequency / reference, 2.0);
+
+        /// <summary>Frequency as a (fractional) MIDI note number: 69 = A4 (440 Hz), 60 = middle C.</summary>
+        public static float MidiNote(float frequency) => 69f + 12f * (float)Math.Log(frequency / 440f, 2.0);
+
+        static readonly string[] NoteNames = { "C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B" };
+
+        /// <summary>"A4", "C♯3"... for a MIDI note number.</summary>
+        public static string NoteName(int midi) => midi < 0 ? string.Empty : NoteNames[midi % 12] + (midi / 12 - 1);
     }
 }
