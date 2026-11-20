@@ -6,9 +6,12 @@ using UnityEngine.UIElements;
 
 namespace SpotlightAR.UI
 {
+    public enum HomeTab { Songs, Library, Stages }
+
     /// <summary>
-    /// Home: greeting, search, genre chips, a rotating "Number 1 today" card and the
-    /// "Top this week" list (screens_v2.png, left).
+    /// Home with three tabs. Songs: greeting, search, genre chips, a rotating featured card and
+    /// the "Top this week" list. Library and Stages are drawn by <see cref="LibraryPage"/> and
+    /// <see cref="StagesPage"/>; the GameManager fills them when their tab opens.
     /// </summary>
     public sealed class HomeScreen : UIScreen
     {
@@ -49,6 +52,15 @@ namespace SpotlightAR.UI
         public event Action ThemeToggleRequested;
 
         readonly Icon themeIcon;
+        readonly VisualElement[] pages = new VisualElement[3];
+        readonly Button[] navItems = new Button[3];
+
+        public LibraryPage Library { get; }
+        public StagesPage Stages { get; }
+        public HomeTab Tab { get; private set; } = HomeTab.Songs;
+
+        /// <summary>The player switched tabs (Songs, Library, Stages).</summary>
+        public event Action<HomeTab> TabChanged;
 
         /// <summary>Shows a sun in dark mode (tap for light) and a moon in light mode.</summary>
         public void SetDarkMode(bool dark) => themeIcon.Glyph = dark ? IconGlyph.Sun : IconGlyph.Moon;
@@ -84,7 +96,40 @@ namespace SpotlightAR.UI
             themeIcon = Require<Icon>("theme-icon");
             Require<Button>("theme-button").clicked += () => ThemeToggleRequested?.Invoke();
 
+            pages[0] = Require<VisualElement>("page-songs");
+            pages[1] = Require<VisualElement>("page-library");
+            pages[2] = Require<VisualElement>("page-stages");
+            navItems[0] = Require<Button>("nav-home");
+            navItems[1] = Require<Button>("nav-library");
+            navItems[2] = Require<Button>("nav-stages");
+            for (int i = 0; i < navItems.Length; i++)
+            {
+                var tab = (HomeTab)i;
+                navItems[i].clicked += () => SelectTab(tab);
+            }
+            Library = new LibraryPage(Require<VisualElement>("library-content"));
+            Stages = new StagesPage(Require<VisualElement>("stages-content"));
+            Library.BrowseRequested += () => SelectTab(HomeTab.Songs);
+            ShowTab(HomeTab.Songs);
+
             Root.schedule.Execute(AdvanceFeatured).Every(FeaturedIntervalMs);
+        }
+
+        /// <summary>Switch tab from a tap: show it and let the GameManager fill it.</summary>
+        void SelectTab(HomeTab tab)
+        {
+            ShowTab(tab);
+            TabChanged?.Invoke(tab);
+        }
+
+        public void ShowTab(HomeTab tab)
+        {
+            Tab = tab;
+            for (int i = 0; i < pages.Length; i++)
+            {
+                pages[i].style.display = i == (int)tab ? DisplayStyle.Flex : DisplayStyle.None;
+                navItems[i].EnableInClassList("nav__item--active", i == (int)tab);
+            }
         }
 
         Song FeaturedSong => songs.Count > 0 ? songs[Mathf.Min(featuredIndex, songs.Count - 1)] : null;
@@ -228,7 +273,7 @@ namespace SpotlightAR.UI
 
         void AdvanceFeatured()
         {
-            if (!IsVisible || searching || songs.Count < 2) return;
+            if (!IsVisible || Tab != HomeTab.Songs || searching || songs.Count < 2) return;
             featuredIndex = (featuredIndex + 1) % Mathf.Min(FeaturedCount, songs.Count);
             RenderFeatured();
         }
