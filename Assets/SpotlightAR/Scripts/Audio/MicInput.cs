@@ -40,12 +40,6 @@ namespace SpotlightAR.Audio
         [Tooltip("Ignore pitch readings the detector is unsure about.")]
         [SerializeField, Range(0f, 1f)] float minPitchConfidence = 0.8f;
 
-        [Header("Syllable onsets (rhythm)")]
-        [Tooltip("Energy jump (ratio) between short audio blocks that counts as a new syllable.")]
-        [SerializeField] float onsetRatio = 2f;
-        [Tooltip("Minimum time between two syllables (seconds).")]
-        [SerializeField] float onsetMinGap = 0.08f;
-
         [Header("Smoothing")]
         [Tooltip("How quickly loudness rises when singing starts.")]
         [SerializeField] float attack = 18f;
@@ -65,19 +59,6 @@ namespace SpotlightAR.Audio
         float pitch;
         int captureRate;
 
-        // Onset detection works on small consecutive blocks of every new sample.
-        const int OnsetHop = 512;
-        readonly float[] hopBuffer = new float[OnsetHop];
-        int lastReadPosition;
-        float previousEnergy;
-        float lastOnsetTime;
-        float currentFloorDb = -50f;
-
-        /// <summary>
-        /// Raised when a new syllable starts. The argument is how many seconds ago it happened,
-        /// so listeners can line it up exactly with the song's playback time.
-        /// </summary>
-        public event Action<float> OnsetDetected;
 
         /// <summary>Raised when capture starts (true) or stops (false).</summary>
         public event Action<bool> ListeningChanged;
@@ -236,8 +217,6 @@ namespace SpotlightAR.Audio
             // A 1-second looping buffer is plenty: we only ever read the newest samples.
             clip = Microphone.Start(device, true, 1, rate);
             captureRate = rate;
-            lastReadPosition = 0;
-            previousEnergy = 0f;
             samples = new float[sampleSize];
             pitchSamples = new float[PitchWindow];
             pitchDetector = new PitchDetector(PitchWindow);
@@ -269,9 +248,7 @@ namespace SpotlightAR.Audio
                     TrackAmbient(decibels, dt);
                     floor = Mathf.Clamp(ambientDb + noiseMarginDb, noiseFloorDb, ceilingDb - 12f);
                 }
-                currentFloorDb = floor;
                 target = Mathf.InverseLerp(floor, ceilingDb, decibels);
-                DetectOnsets();
             }
             if (IsListening()) CheckCaptureHealth(dt);
             if (routeWatcher.Poll()) HandleRouteChange();
@@ -280,45 +257,6 @@ namespace SpotlightAR.Audio
             level = Mathf.Lerp(level, target, 1f - Mathf.Exp(-rate * dt));
             peak = Mathf.Max(level, peak - 0.35f * dt);
             pitch = target >= pitchGate ? ReadPitch() : 0f;
-        }
-
-        /// <summary>
-        /// Walks every new sample in 512-sample blocks (about 12 ms) and fires an onset when a
-        /// block's energy jumps well above the previous ones: the start of a syllable.
-        /// </summary>
-        void DetectOnsets()
-        {
-            int position = Microphone.GetPosition(device);
-            int total = clip.samples;
-            int available = position - lastReadPosition;
-            if (available < 0) available += total;
-            if (available > total / 2)
-            {
-                lastReadPosition = position; // fell too far behind (app paused): skip ahead
-                return;
-            }
-
-            float gate = Mathf.Pow(10f, currentFloorDb / 10f); // floor in dB -> energy
-            float now = Time.unscaledTime;
-            while (available >= OnsetHop)
-            {
-                clip.GetData(hopBuffer, lastReadPosition);
-                lastReadPosition = (lastReadPosition + OnsetHop) % total;
-                available -= OnsetHop;
-
-                float energy = 0f;
-                for (int i = 0; i < OnsetHop; i++) energy += hopBuffer[i] * hopBuffer[i];
-                energy /= OnsetHop;
-
-                float secondsAgo = available / (float)captureRate;
-                bool jump = energy > gate && energy > previousEnergy * onsetRatio;
-                if (jump && !Muted && now - secondsAgo - lastOnsetTime >= onsetMinGap)
-                {
-                    lastOnsetTime = now - secondsAgo;
-                    OnsetDetected?.Invoke(secondsAgo);
-                }
-                previousEnergy = Mathf.Lerp(previousEnergy, energy, 0.5f);
-            }
         }
 
         float ReadPitch()
