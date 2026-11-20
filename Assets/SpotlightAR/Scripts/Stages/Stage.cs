@@ -86,6 +86,12 @@ namespace SpotlightAR.Stages
             }
         }
 
+        /// <summary>Changes the neon sign's glow colour (the Stages tab setting).</summary>
+        public void SetSignColor(Color color)
+        {
+            if (sign != null) sign.SetColor(color);
+        }
+
         /// <summary>Shows the player's chosen stage name on the neon sign.</summary>
         public void SetStageName(string stageName)
         {
