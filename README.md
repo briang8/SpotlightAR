@@ -11,10 +11,12 @@ Built with Unity 6 and AR Foundation (ARCore) as a vertical slice for an AR/VR c
 - **Browse songs by genre** (Afrobeats, Pop, Rap, R&B, Gospel) from curated YouTube karaoke playlists, or **search all of YouTube** for a karaoke version of any song.
 - **Set up**: pick one of three stages and pass a quick headphones and mic check.
 - **Place the stage in AR**: scan a floor or table, tap to place, pinch to resize (tabletop, room or life size) and twist to turn.
-- **Sing**: the karaoke video plays below the stage while your voice drives the lights, the crowd and a crowd-hype multiplier (x1 to x3).
+- **Sing**: the karaoke video plays below the stage while your voice drives the lights, the crowd and a crowd-hype multiplier (x1 to x3). The crowd raises their hands when you get loud, cheers at milestones and holds up phone torches at x3.
 - **Sing mode**: for songs with synced lyrics, the original recording plays quietly (45% by default, adjustable) as a guide while the lyrics fill in line by line as the song plays.
 - **Light and dark mode**: light by default, switch with the moon button on the home screen.
-- **Get results**: stars, score, best score per song, and coaching stats (how much of the song you sang, longest steady note, pitch steadiness, peak hype) with a tip on what to improve.
+- **Live note**: hold a note and the note you're singing (like "A3") shows on screen.
+- **Get the crowd's verdict**: stars, score, your best score and how the crowd took it. The stars reflect how much you sang and how hyped the crowd got. It's built for fun, not as a singing exam.
+- **Library**: your stats, personal bests and every show you've done (tap one to sing it again). **Stages**: rendered previews of each stage, your best score on each, and your neon sign colour.
 
 ### The three stages
 
@@ -29,7 +31,7 @@ Built with Unity 6 and AR Foundation (ARCore) as a vertical slice for an AR/VR c
 - **Unity 6000.3.27f1 (Unity 6.3 LTS)** with the **Android Build Support** module
 - An **ARCore-supported Android phone** (Android 8.0 / API 26 or newer) with **Google Play Services for AR** installed
 - **Headphones** (wired or Bluetooth) for singing: the app checks that the song is not playing through a speaker, so the mic only hears you
-- A **YouTube Data API v3** key (free). Song tempo and key come from open databases that need no key
+- A **YouTube Data API v3** key (free). Synced lyrics come from LRCLIB, which needs no key
 
 ## How to run it
 
@@ -42,12 +44,11 @@ Built with Unity 6 and AR Foundation (ARCore) as a vertical slice for an AR/VR c
 
 ### Known limitations
 
-- **Needs an internet connection.** Songs stream from YouTube and can't be saved offline (YouTube's terms don't allow downloading or caching videos). Song lists, covers and tempo/key data are cached, so menus still load offline, but a song can't play without a connection.
-
-- **Song key data is incomplete.** The key comes from AcousticBrainz, which stopped collecting in 2022 and detects keys automatically. A key is only used when most matching recordings agree on the notes, so newer songs (and many Afrobeats tracks) have no key. The results screen then shows the key you sang in, suggests looking up the song's key on a site like Tunebat to compare, and the pitch stat becomes "stayed in one key".
+- **Needs an internet connection.** Songs stream from YouTube and can't be saved offline (YouTube's terms don't allow downloading or caching videos). Song lists, covers and lyrics are cached and the Library and Stages tabs work offline, but a song can't play without a connection. There's no legal way to bundle offline songs: free-licence songs don't come with timed lyrics.
+- **Headphones are required to be scored.** With the song playing through the phone's speaker, the mic hears the song and your voice mixed together. Cancelling the song out would need a copy of its audio, and the song plays inside YouTube's player, which the app can't read. So the app checks for headphones instead of letting the song leak into your score.
+- **It's for fun, not a singing judge.** The stars come from how much you sang and the crowd hype. The app doesn't judge the words, the melody, the key or the timing of your singing: a phone mic can't tell those reliably for any YouTube song, so it doesn't pretend to. The only pitch shown is the note you're holding, where the pitch detector is accurate.
+- **Sing mode needs synced lyrics**, which come from LRCLIB, a community database: many songs have them, not all. Without them, the song plays as a karaoke video.
 - **Sing mode can't remove only the vocals.** The song plays inside YouTube's player, which the app can't process (and YouTube's terms don't allow altering it), so Sing mode lowers the whole song's volume instead. The YouTube player also has to stay visible. Lyrics are timed to the album version, so the app picks the original audio upload whose length matches the lyrics.
-- **Relative keys count as the same.** F♯ major and D♯ minor use the same notes, so singing either one on that song counts as in key.
-- **Some songs have no tempo** on Deezer or AcousticBrainz. Rap songs then show flow speed instead of "on the beat".
 
 ### Changing the playlists
 
@@ -62,22 +63,21 @@ Assets/SpotlightAR/
 ├── Scripts/
 │   ├── Core/        GameManager (session flow), GameState
 │   ├── AR/          StagePlacer, TouchGestureInput, PlacementReticle
-│   ├── Audio/       MicInput, PitchDetector, MicCheck, SpeakerCheck
-│   ├── Scoring/     ScoreManager, PerformanceResult, PlayerProfile
-│   ├── Songs/       SongCatalog, YouTubeService, SongCache, Playback/
-│   ├── Stages/      Stage (abstract), NeonStage, ArenaStage, RooftopStage, effects
-│   └── UI/          UIManager and one class per screen
+│   ├── Audio/       MicInput, PitchDetector, MicCheck, SpeakerCheck, AudioRouteWatcher
+│   ├── Scoring/     ScoreManager (score, hype, stars), PerformanceResult, PlayerProfile, PerformanceHistory
+│   ├── Songs/       SongCatalog, YouTubeService, SongCache, SyncedLyrics, SingModeService, Playback/
+│   ├── Stages/      Stage (abstract), NeonStage, ArenaStage, RooftopStage, CrowdMember, StagePreviewRenderer, effects
+│   └── UI/          UIManager, one class per screen, LibraryPage, StagesPage, custom elements (Icon, VoiceMeter)
 ├── Shaders/         Custom lightweight URP shaders (beams, lasers, glows, skyline)
 ├── Models/          CC0 crowd and stage gear models (glTF)
 ├── Prefabs/         Stage prefabs built from reusable parts
 ├── UI/              UI Toolkit layouts (UXML), styles (USS) and fonts
+├── Tests/EditMode/  Pitch detection tests (synthetic voices, noise rejection, note names)
 └── Scenes/Main.unity
 ```
 
 ## Credits
 
-- Song tempo: **[Deezer API](https://developers.deezer.com/api)**
-- Song key and backup tempo: **[AcousticBrainz](https://acousticbrainz.org)** (CC0 data), matched through **[MusicBrainz](https://musicbrainz.org)**
 - Song lists and video playback: **YouTube Data API v3** and the **YouTube IFrame Player API**
 - In-app web view: **[gree/unity-webview](https://github.com/gree/unity-webview)** (zlib licence)
 - Synced lyrics for Sing mode: **[LRCLIB](https://lrclib.net)**
