@@ -46,8 +46,12 @@ namespace SpotlightAR.Songs
         /// Before the first line, the current line is empty and "next" shows what's coming.
         /// </summary>
         public void Get(float songTime, out string previous, out string current, out float progress, out string next)
+            => Get(songTime, out previous, out current, out progress, out next, out _);
+
+        /// <summary>Same, plus the line after next, so the singer can read ahead.</summary>
+        public void Get(float songTime, out string previous, out string current, out float progress, out string next, out string afterNext)
         {
-            previous = current = next = string.Empty;
+            previous = current = next = afterNext = string.Empty;
             progress = 0f;
             if (IsEmpty) return;
 
@@ -57,12 +61,14 @@ namespace SpotlightAR.Songs
             if (index < 0)
             {
                 next = lines[0];
+                afterNext = lines.Count > 1 ? lines[1] : string.Empty;
                 return;
             }
 
             current = lines[index];
             previous = index > 0 ? lines[index - 1] : string.Empty;
             next = index + 1 < lines.Count ? lines[index + 1] : string.Empty;
+            afterNext = index + 2 < lines.Count ? lines[index + 2] : string.Empty;
 
             float start = times[index];
             float end = index + 1 < times.Count ? times[index + 1] : start + 4f;

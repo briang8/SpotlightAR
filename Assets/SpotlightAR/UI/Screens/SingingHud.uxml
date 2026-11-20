@@ -21,6 +21,14 @@
             <ui:Label name="time-total" text="0:00" class="timeline__time t-semibold" />
         </ui:VisualElement>
         <ui:VisualElement class="hud-middle" picking-mode="Ignore">
+            <ui:VisualElement class="hud-left" picking-mode="Ignore">
+                <ui:VisualElement name="note-pill" class="note-pill" picking-mode="Ignore">
+                    <SpotlightAR.UI.Icon glyph="Music" class="note-pill__icon" />
+                    <ui:Label name="note-name" text="–" class="note-pill__note t-bold" />
+                    <ui:Label name="note-state" text="" class="note-pill__state t-semibold" />
+                </ui:VisualElement>
+                <ui:VisualElement name="mini-slot" class="mini-slot" picking-mode="Ignore" />
+            </ui:VisualElement>
             <ui:VisualElement class="side-rail">
                 <ui:Button name="move-button" class="round-button round-button--small round-button--overlay" tooltip="Move the stage">
                     <SpotlightAR.UI.Icon glyph="Move" />
@@ -35,6 +43,7 @@
             <ui:Label name="lyric-prev" class="lyrics__dim" />
             <ui:Label name="lyric-now" enable-rich-text="true" class="lyrics__now heading--bold" />
             <ui:Label name="lyric-next" class="lyrics__dim" />
+            <ui:Label name="lyric-next2" class="lyrics__dim lyrics__dim--far" />
         </ui:VisualElement>
         <ui:VisualElement name="volume-row" class="volume-row">
             <ui:Label text="Song volume" class="volume-row__label t-semibold" />

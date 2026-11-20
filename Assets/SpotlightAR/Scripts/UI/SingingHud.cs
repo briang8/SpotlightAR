@@ -34,6 +34,12 @@ namespace SpotlightAR.UI
         readonly Label lyricPrev;
         readonly Label lyricNow;
         readonly Label lyricNext;
+        readonly Label lyricNext2;
+        readonly VisualElement notePill;
+        readonly Label noteName;
+        readonly Label noteState;
+        readonly VisualElement miniSlot;
+        readonly VisualElement playerHome;
         readonly VisualElement volumeRow;
         readonly Slider volumeSlider;
         readonly Label volumeValue;
@@ -77,6 +83,12 @@ namespace SpotlightAR.UI
             lyricPrev = Require<Label>("lyric-prev");
             lyricNow = Require<Label>("lyric-now");
             lyricNext = Require<Label>("lyric-next");
+            lyricNext2 = Require<Label>("lyric-next2");
+            notePill = Require<VisualElement>("note-pill");
+            noteName = Require<Label>("note-name");
+            noteState = Require<Label>("note-state");
+            miniSlot = Require<VisualElement>("mini-slot");
+            playerHome = playerSlot.parent;
             volumeRow = Require<VisualElement>("volume-row");
             volumeSlider = Require<Slider>("volume-slider");
             volumeValue = Require<Label>("volume-value");
@@ -190,17 +202,67 @@ namespace SpotlightAR.UI
 
         // ---------- Sing mode ----------
 
-        public void SetLyricsVisible(bool visible) => lyricsCard.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        /// <summary>
+        /// Sing mode: lyrics take the main spot and the video shrinks to a small square beside the
+        /// stage. Karaoke: the video is full width because its lyrics are part of the video.
+        /// </summary>
+        public void SetLyricsVisible(bool visible)
+        {
+            lyricsCard.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            VisualElement home = visible ? miniSlot : playerHome;
+            if (playerSlot.parent != home) home.Add(playerSlot);
+            playerSlot.EnableInClassList("player-slot--mini", visible);
+            SizeMiniPlayer();
+        }
+
+        /// <summary>
+        /// YouTube's player must stay at least 200 x 200 real pixels, so the mini player is sized
+        /// from the screen's pixel width, not just panel units.
+        /// </summary>
+        void SizeMiniPlayer()
+        {
+            if (!playerSlot.ClassListContains("player-slot--mini"))
+            {
+                playerSlot.style.width = StyleKeyword.Null;
+                playerSlot.style.height = StyleKeyword.Null;
+                return;
+            }
+            float panelWidth = Root.panel != null ? Root.panel.visualTree.layout.width : 0f;
+            float unitsPerPixel = panelWidth > 0f && Screen.width > 0 ? panelWidth / Screen.width : 1f;
+            float size = Mathf.Max(330f, 216f * unitsPerPixel);
+            playerSlot.style.width = size;
+            playerSlot.style.height = size;
+        }
+
+        /// <summary>
+        /// The note being held right now (MIDI), or -1. Only steady held notes are shown: speech
+        /// and rap don't sit on one pitch, so the pill just waits instead of flickering.
+        /// </summary>
+        public void SetLiveNote(int midi)
+        {
+            bool holding = midi >= 0;
+            notePill.EnableInClassList("note-pill--idle", !holding);
+            notePill.EnableInClassList("note-pill--in", holding);
+            noteName.text = holding ? Audio.PitchDetector.NoteName(midi) : "–";
+            noteState.text = holding ? "held" : "hold a note";
+        }
 
         /// <summary>
         /// Shows the previous, current and next lines. The part of the current line already
         /// sung (by time) fills in with the accent colour, like a karaoke screen.
         /// </summary>
-        public void SetLyrics(string previous, string current, float progress, string next)
+        public void SetLyrics(string previous, string current, float progress, string next, string afterNext = null)
         {
             lyricPrev.text = previous ?? string.Empty;
             lyricNext.text = next ?? string.Empty;
+            lyricNext2.text = afterNext ?? string.Empty;
             current ??= string.Empty;
+            if (current.Trim().Length == 0)
+            {
+                // Intro or instrumental break: a quiet music cue instead of an empty card.
+                lyricNow.text = "•   •   •";
+                return;
+            }
 
             int split = Mathf.Clamp(Mathf.RoundToInt(current.Length * Mathf.Clamp01(progress)), 0, current.Length);
             // Fill whole words so the colour change doesn't land mid-word.
@@ -227,6 +289,8 @@ namespace SpotlightAR.UI
         protected override void OnShown()
         {
             meter.ClearLevels();
+            SetLiveNote(-1);
+            SizeMiniPlayer();
             volumeRow.RemoveFromClassList("volume-row--open");
         }
 

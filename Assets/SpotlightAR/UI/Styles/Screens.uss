@@ -179,8 +179,82 @@
 
 .hud-middle {
     flex-grow: 1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+    margin-top: 22px;
+    margin-bottom: 18px;
+}
+
+.hud-left {
+    flex-shrink: 1;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.side-rail {
     justify-content: center;
-    align-items: flex-end;
+}
+
+/* Live note: shows the app hearing the singer, note by note. */
+.note-pill {
+    flex-direction: row;
+    align-items: center;
+    padding: 12px 26px 12px 18px;
+    border-radius: 40px;
+    background-color: var(--c-overlay);
+    transition-property: opacity;
+    transition-duration: 0.2s;
+}
+
+.note-pill--idle {
+    opacity: 0.75;
+}
+
+.note-pill__icon {
+    width: 40px;
+    height: 40px;
+    color: var(--c-muted);
+}
+
+.note-pill__note {
+    min-width: 76px;
+    margin-left: 10px;
+    font-size: 40px;
+    color: var(--c-text);
+}
+
+.note-pill__state {
+    margin-left: 12px;
+    padding: 4px 16px;
+    border-radius: 22px;
+    font-size: 24px;
+    color: var(--c-muted);
+    background-color: var(--c-fill);
+}
+
+.note-pill--in .note-pill__state {
+    color: var(--c-on-green);
+    background-color: var(--c-green);
+}
+
+.note-pill--in .note-pill__icon {
+    color: var(--c-green);
+}
+
+.mini-slot {
+    align-items: flex-start;
+}
+
+/* Sing mode: the video as a small square beside the stage (YouTube needs it visible). */
+.player-slot--mini {
+    margin-top: 0;
+    border-radius: 36px;
+}
+
+.player-slot--mini .player-slot__caption {
+    padding: 10px 14px;
+    font-size: 20px;
 }
 
 .side-rail > .round-button {
@@ -201,14 +275,14 @@
 }
 
 .lyrics {
-    padding: 30px 40px;
+    padding: 36px 44px;
     border-radius: 56px;
     background-color: var(--c-overlay);
     align-items: center;
 }
 
 .lyrics__dim {
-    font-size: 32px;
+    font-size: 34px;
     color: var(--c-muted);
     white-space: normal;
     -unity-text-align: middle-center;
@@ -216,7 +290,7 @@
 
 .lyrics__now {
     margin: 10px 0;
-    font-size: 52px;
+    font-size: 58px;
     color: var(--c-muted);
     white-space: normal;
     -unity-text-align: middle-center;
@@ -391,4 +465,10 @@
     background-color: rgba(12, 11, 13, 0.8);
     -unity-text-align: middle-center;
     white-space: normal;
+}
+
+.lyrics__dim--far {
+    margin-top: 6px;
+    font-size: 30px;
+    opacity: 0.6;
 }
