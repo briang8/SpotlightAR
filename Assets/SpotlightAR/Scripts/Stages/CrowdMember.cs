@@ -45,6 +45,7 @@ namespace SpotlightAR.Stages
 
         Animation clips;
         string idleClip, waveClip;
+        float waveEndsAt = -1f;
         Transform upperArmL, lowerArmL, upperArmR, lowerArmR, wristR;
 
         Vector3 figureRest;
@@ -190,8 +191,12 @@ namespace SpotlightAR.Stages
         {
             cheer = 1f;
             if (clips == null || waveClip == null || idleClip == null) return;
+            // One wave, then back to idle. The imported clip loops, so time it instead of queueing.
+            AnimationState wave = clips[waveClip];
+            wave.wrapMode = WrapMode.Once;
+            wave.time = 0f;
             clips.CrossFade(waveClip, 0.2f);
-            clips.CrossFadeQueued(idleClip, 0.3f, QueueMode.CompleteOthers);
+            waveEndsAt = Time.time + Mathf.Min(wave.length, 2.5f) - 0.3f;
         }
 
         void Update()
@@ -199,13 +204,18 @@ namespace SpotlightAR.Stages
             float dt = Time.deltaTime;
             phase += dt * Mathf.Lerp(bounceSpeed.x, bounceSpeed.y, energy) * Mathf.PI;
             cheer = Mathf.MoveTowards(cheer, 0f, dt * 1.4f);
+            if (waveEndsAt > 0f && Time.time >= waveEndsAt)
+            {
+                waveEndsAt = -1f;
+                clips.CrossFade(idleClip, 0.35f);
+            }
 
             float bounce = Mathf.Abs(Mathf.Sin(phase)) * Mathf.Lerp(bounceHeight.x, bounceHeight.y, energy * energy);
             float jump = Mathf.Sin(cheer * Mathf.PI) * cheerHeight;
             figure.localPosition = figureRest + Vector3.up * (bounce + jump);
 
+            // Arms follow the live voice only, so going quiet (or muting) brings them straight down.
             float armsTarget = Mathf.InverseLerp(armsUpThreshold, 1f, energy);
-            if (phoneShown) armsTarget = Mathf.Max(armsTarget, 0.8f);
             armsUp = Mathf.Lerp(armsUp, armsTarget, 1f - Mathf.Exp(-6f * dt));
 
             TurnTowardViewer(dt);
@@ -222,7 +232,7 @@ namespace SpotlightAR.Stages
             }
 
             if (phoneLight == null) return;
-            bool show = phoneShown && wristR != null;
+            bool show = phoneShown && wristR != null && armsUp > 0.5f;
             if (phoneLight.activeSelf != show) phoneLight.SetActive(show);
             if (!show) return;
             // Held upright in the raised hand, screen toward the fan, torch toward the stage.
