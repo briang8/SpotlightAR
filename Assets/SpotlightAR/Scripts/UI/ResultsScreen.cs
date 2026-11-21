@@ -57,6 +57,7 @@ namespace SpotlightAR.UI
 
         public void ShowResult(PerformanceResult result)
         {
+            SetScored(true);
             headline.text = result.stars >= 4 ? "Encore!" : result.stars >= 2 ? "Nice show!" : "Warm-up done";
             songTitle.text = result.FinishedEarly
                 ? $"{result.songTitle} · finished at {Songs.TimeFormat.MinutesSeconds(result.secondsPlayed)} of {Songs.TimeFormat.MinutesSeconds(result.songDuration)}"
@@ -74,6 +75,28 @@ namespace SpotlightAR.UI
 
             AnimateStars(result.stars);
             AnimateScore(result.score);
+        }
+
+        /// <summary>
+        /// Party mode (no headphones): the mic heard the song as loudly as the singer, so there
+        /// are no stars or score, just how wild the crowd got.
+        /// </summary>
+        public void ShowParty(PerformanceResult result)
+        {
+            SetScored(false);
+            headline.text = "What a party!";
+            songTitle.text = result.songTitle;
+            best.text = "Party mode isn't scored. Plug in headphones to earn stars and a score.";
+            hype.text = $"THE CROWD · PEAK HYPE X{result.peakHype}";
+            reaction.text = result.peakHype >= 3 ? "The whole room was dancing." : "The crowd had a good time.";
+        }
+
+        void SetScored(bool scored)
+        {
+            DisplayStyle display = scored ? DisplayStyle.Flex : DisplayStyle.None;
+            stars.style.display = display;
+            score.style.display = display;
+            if (!scored) newBest.style.display = DisplayStyle.None;
         }
 
         void AnimateStars(int earned)

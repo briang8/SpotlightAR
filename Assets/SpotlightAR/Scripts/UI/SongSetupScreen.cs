@@ -24,15 +24,19 @@ namespace SpotlightAR.UI
         readonly Button continueButton;
         readonly Button skipButton;
         readonly Button recheckButton;
+        readonly Button partyModeButton;
         readonly List<Button> stageCards = new List<Button>();
 
         bool headphonesOk;
+        bool partyMode;
         MicCheck.Result micResult = MicCheck.Result.Listening;
 
         public event Action BackRequested;
         public event Action<int> StageSelected;
         public event Action ContinueRequested;
         public event Action RecheckRequested;
+        /// <summary>The player has no headphones and picked party mode.</summary>
+        public event Action PartyModeRequested;
         public event Action<string> StageNameChanged;
 
         public SongSetupScreen(VisualElement root) : base(root)
@@ -48,11 +52,13 @@ namespace SpotlightAR.UI
             continueButton = Require<Button>("continue-button");
             skipButton = Require<Button>("skip-mic-button");
             recheckButton = Require<Button>("recheck-button");
+            partyModeButton = Require<Button>("party-mode-button");
 
             Require<Button>("back-button").clicked += () => BackRequested?.Invoke();
             continueButton.clicked += () => ContinueRequested?.Invoke();
             skipButton.clicked += () => ContinueRequested?.Invoke();
             recheckButton.clicked += () => RecheckRequested?.Invoke();
+            partyModeButton.clicked += () => PartyModeRequested?.Invoke();
 
             nameField = Require<TextField>("stage-name-field");
             nameField.textEdition.placeholder = "Spotlight";
@@ -93,6 +99,8 @@ namespace SpotlightAR.UI
         public void ShowHeadphoneCheck(SpeakerCheck.Result result)
         {
             headphonesOk = result == SpeakerCheck.Result.Headphones;
+            partyMode = false;
+            partyModeButton.style.display = result == SpeakerCheck.Result.Speaker ? DisplayStyle.Flex : DisplayStyle.None;
             micPanel.EnableInClassList("mic-panel--help", result == SpeakerCheck.Result.Speaker || result == SpeakerCheck.Result.NoMic);
             micPanel.EnableInClassList("mic-panel--heard", false);
             recheckButton.style.display = result == SpeakerCheck.Result.Speaker || result == SpeakerCheck.Result.NoMic ? DisplayStyle.Flex : DisplayStyle.None;
@@ -105,7 +113,7 @@ namespace SpotlightAR.UI
                     break;
                 case SpeakerCheck.Result.Speaker:
                     micStatus.text = "Sound is coming from a speaker";
-                    micTip.text = "Connect headphones (wired or Bluetooth) so the mic only hears you, not the song. Then tap Check again.";
+                    micTip.text = "Connect headphones (wired or Bluetooth) so the mic only hears you, not the song, then tap Check again. No headphones? Party mode lets the crowd dance to everything, but the show isn't scored.";
                     break;
                 case SpeakerCheck.Result.NoMic:
                     micStatus.text = "No microphone access";
@@ -115,6 +123,22 @@ namespace SpotlightAR.UI
                     ShowMicResult(micResult);
                     return;
             }
+            UpdateButtons();
+        }
+
+        /// <summary>
+        /// Party mode: no headphones, so the mic hears the song as loudly as the player. The
+        /// crowd reacts to everything and the show isn't scored, so no mic check is needed.
+        /// </summary>
+        public void UsePartyMode()
+        {
+            partyMode = true;
+            partyModeButton.style.display = DisplayStyle.None;
+            recheckButton.style.display = DisplayStyle.Flex;
+            micPanel.EnableInClassList("mic-panel--help", false);
+            micPanel.EnableInClassList("mic-panel--heard", true);
+            micStatus.text = "Party mode on";
+            micTip.text = "The crowd dances to everything it hears, the song included, and the show isn't scored. Plug in headphones and tap Check again to be scored.";
             UpdateButtons();
         }
 
@@ -172,7 +196,7 @@ namespace SpotlightAR.UI
         public void ShowMicResult(MicCheck.Result result)
         {
             micResult = result;
-            if (!headphonesOk)
+            if (!headphonesOk || partyMode)
             {
                 UpdateButtons();
                 return;
@@ -208,10 +232,10 @@ namespace SpotlightAR.UI
 #else
             const bool editor = false;
 #endif
-            continueButton.SetEnabled(headphonesOk && micResult == MicCheck.Result.Heard);
-            bool canSkipMic = headphonesOk && micResult == MicCheck.Result.NeedsHelp;
+            continueButton.SetEnabled(partyMode || (headphonesOk && micResult == MicCheck.Result.Heard));
+            bool canSkipMic = !partyMode && headphonesOk && micResult == MicCheck.Result.NeedsHelp;
             skipButton.text = editor && !canSkipMic ? "Skip checks (Editor only)" : "Continue without mic check";
-            skipButton.style.display = canSkipMic || editor ? DisplayStyle.Flex : DisplayStyle.None;
+            skipButton.style.display = canSkipMic || (editor && !partyMode) ? DisplayStyle.Flex : DisplayStyle.None;
         }
     }
 }

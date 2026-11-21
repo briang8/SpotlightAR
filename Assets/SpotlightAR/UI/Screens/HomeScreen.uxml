@@ -24,7 +24,7 @@
                 <ui:VisualElement name="featured-card" class="featured">
                     <ui:VisualElement name="featured-cover" class="featured__cover cover" />
                     <ui:VisualElement class="featured__info">
-                        <ui:Label text="TONIGHT'S PICK" class="featured__badge t-caps" />
+                        <ui:Label name="featured-badge" text="TONIGHT'S PICK" class="featured__badge t-caps" />
                         <ui:Label name="featured-title" text="Golden Hour Drive" class="featured__title heading" />
                         <ui:Label name="featured-meta" text="The Lantern Kids · 3:42" class="featured__meta" />
                         <ui:Button name="featured-sing" class="featured__sing">
@@ -39,7 +39,7 @@
                     <ui:Label name="search-online-label" text="Search YouTube" class="search-online__label" />
                 </ui:Button>
                 <ui:VisualElement class="list-header">
-                    <ui:Label name="list-title" text="Top this week" class="list-header__title heading--bold" />
+                    <ui:Label name="list-title" text="More songs" class="list-header__title heading--bold" />
                     <ui:Button name="see-all" text="See all" class="text-button t-semibold" />
                 </ui:VisualElement>
                 <ui:Label name="home-status" text="Loading songs…" class="home__status" />

@@ -641,6 +641,11 @@
     margin-top: 26px;
 }
 
+.mic-panel__party {
+    display: none;
+    margin-top: 14px;
+}
+
 .mode-switch {
     margin-bottom: 18px;
 }

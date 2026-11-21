@@ -262,6 +262,7 @@ MonoBehaviour:
   cameraManager: {fileID: 1404}
   intensityRange: {x: 0.35, y: 1.3}
   maxDarkening: 0.6
+  tintStrength: 0.6
   smoothing: 3
 --- !u!1 &1100
 GameObject:
@@ -723,6 +724,8 @@ MonoBehaviour:
   followSpeed: 18
   pulseAmount: 0.04
   pulseSpeed: 3
+  okColor: {r: 1, g: 0.97, b: 0.92, a: 1}
+  tooBigColor: {r: 1, g: 0.42, b: 0.3, a: 1}
 --- !u!1 &1510
 GameObject:
   m_ObjectHideFlags: 0
@@ -954,8 +957,6 @@ MonoBehaviour:
   noiseMarginDb: 6
   pitchGate: 0.12
   minPitchConfidence: 0.8
-  onsetRatio: 2
-  onsetMinGap: 0.08
   attack: 18
   release: 5
 --- !u!114 &1703
@@ -1122,6 +1123,7 @@ MonoBehaviour:
   anchorManager: {fileID: 1206}
   arCamera: {fileID: 1402}
   gestures: {fileID: 1803}
+  performerView: 1
   reticle: {fileID: 1502}
   stagePrefab: {fileID: 102, guid: 29306af70ba92b8631b3e4c0a803139b, type: 3}
   tabletopScale: 0.35
@@ -1130,6 +1132,10 @@ MonoBehaviour:
   scaleLimits: {x: 0.15, y: 4}
   scaleSmoothing: 12
   tableHeightThreshold: 1
+  stageFootprint: 1.7
+  depthOcclusion: 1
+  dropHeight: 0.25
+  dropSeconds: 0.55
 --- !u!114 &1803
 MonoBehaviour:
   m_ObjectHideFlags: 0

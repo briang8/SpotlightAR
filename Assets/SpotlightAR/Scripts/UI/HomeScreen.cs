@@ -10,7 +10,7 @@ namespace SpotlightAR.UI
 
     /// <summary>
     /// Home with three tabs. Songs: greeting, search, genre chips, a rotating featured card and
-    /// the "Top this week" list. Library and Stages are drawn by <see cref="LibraryPage"/> and
+    /// the song list. Library and Stages are drawn by <see cref="LibraryPage"/> and
     /// <see cref="StagesPage"/>; the GameManager fills them when their tab opens.
     /// </summary>
     public sealed class HomeScreen : UIScreen
@@ -26,6 +26,7 @@ namespace SpotlightAR.UI
         readonly VisualElement chips;
         readonly VisualElement featured;
         readonly VisualElement featuredCover;
+        readonly Label featuredBadge;
         readonly Label featuredTitle;
         readonly Label featuredMeta;
         readonly VisualElement featuredDots;
@@ -76,6 +77,7 @@ namespace SpotlightAR.UI
             chips = Require<VisualElement>("genre-chips");
             featured = Require<VisualElement>("featured-card");
             featuredCover = Require<VisualElement>("featured-cover");
+            featuredBadge = Require<Label>("featured-badge");
             featuredTitle = Require<Label>("featured-title");
             featuredMeta = Require<Label>("featured-meta");
             featuredDots = Require<VisualElement>("featured-dots");
@@ -208,7 +210,7 @@ namespace SpotlightAR.UI
             songs = list ?? Array.Empty<Song>();
             featuredIndex = 0;
             expanded = false;
-            listTitle.text = "Top this week";
+            listTitle.text = "More songs";
             SetStatus(songs.Count == 0 ? "No songs in this playlist yet." : note);
             RenderFeatured();
             RenderList();
@@ -258,6 +260,7 @@ namespace SpotlightAR.UI
             if (!show) return;
 
             Song song = FeaturedSong;
+            featuredBadge.text = PickBadge(DateTime.Now);
             featuredTitle.text = song.title;
             featuredMeta.text = string.IsNullOrEmpty(song.artist) ? $"{song.FormattedDuration} · {song.genre}" : $"{song.artist} · {song.FormattedDuration} · {song.genre}";
             featuredCover.style.backgroundImage = StyleKeyword.None;
@@ -322,16 +325,21 @@ namespace SpotlightAR.UI
             }
         }
 
-        static string Greeting(DateTime now)
+        static string PartOfDay(DateTime now) => now.Hour switch
         {
-            string part = now.Hour switch
-            {
-                >= 5 and < 12 => "morning",
-                >= 12 and < 17 => "afternoon",
-                >= 17 and < 21 => "evening",
-                _ => "night"
-            };
-            return $"{now.DayOfWeek} {part}";
+            >= 5 and < 12 => "morning",
+            >= 12 and < 17 => "afternoon",
+            >= 17 and < 21 => "evening",
+            _ => "night"
+        };
+
+        static string Greeting(DateTime now) => $"{now.DayOfWeek} {PartOfDay(now)}";
+
+        /// <summary>"THIS MORNING'S PICK" ... "TONIGHT'S PICK", from the phone's clock.</summary>
+        static string PickBadge(DateTime now)
+        {
+            string part = PartOfDay(now);
+            return part == "night" ? "TONIGHT'S PICK" : $"THIS {part.ToUpperInvariant()}'S PICK";
         }
     }
 }

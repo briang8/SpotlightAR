@@ -158,6 +158,13 @@ namespace SpotlightAR.UI
 
         public void SetScore(int score) => scoreLabel.text = score.ToString("N0");
 
+        /// <summary>Party mode isn't scored: hide the score and the note pill, keep the crowd hype.</summary>
+        public void SetScored(bool scored)
+        {
+            scoreLabel.style.display = scored ? DisplayStyle.Flex : DisplayStyle.None;
+            notePill.parent.style.display = scored ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
         public void SetHype(int multiplier)
         {
             hypeLabel.text = $"x{multiplier}";

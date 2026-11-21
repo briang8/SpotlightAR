@@ -18,7 +18,7 @@ namespace SpotlightAR.UI
             (IconGlyph.Spotlight, "Your stage, anywhere",
                 "Pick a song, drop a stage on your floor or table, and sing to a crowd that reacts to you."),
             (IconGlyph.Headphones, "Plug in headphones",
-                "The mic needs to hear you, not the song. Wired or Bluetooth both work."),
+                "The mic needs to hear you, not the song. Wired or Bluetooth both work. No headphones? Party mode lets the crowd dance to everything, just without a score."),
             (IconGlyph.Phone, "Find a floor, tap to place",
                 "Move your phone slowly over the floor or a table, then tap. Pinch to resize, twist to turn."),
             (IconGlyph.Mic, "Sing out",

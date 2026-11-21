@@ -45,6 +45,11 @@ namespace SpotlightAR.Core
         [SerializeField] int targetFrameRate = 30;
 
         readonly MicCheck micCheck = new MicCheck();
+        // Party mode (no headphones): the mic hears the song as loudly as the singer, so the
+        // crowd reacts to the room getting louder and the show isn't scored.
+        readonly PartyEnergy partyEnergy = new PartyEnergy();
+        bool partyMode;
+        bool pendingParty;
         ScoreManager score;
         PlayerProfile profile;
         PerformanceResult pendingResult;
@@ -168,6 +173,7 @@ namespace SpotlightAR.Core
             setup.StageSelected += SelectStage;
             setup.ContinueRequested += EnterPlacing;
             setup.RecheckRequested += () => speakerCheck.Run();
+            setup.PartyModeRequested += UsePartyMode;
             setup.ModeSelected += SelectMode;
 
             stageName = PlayerPrefs.GetString(StageNameKey, string.Empty);
@@ -224,7 +230,17 @@ namespace SpotlightAR.Core
             catalog.GenreFailed += (_, _) => RefreshHomeList();
             speakerCheck.Changed += result =>
             {
-                if (result == SpeakerCheck.Result.Headphones) micCheck.Reset();
+                if (result == SpeakerCheck.Result.Headphones)
+                {
+                    partyMode = false;
+                    micCheck.Reset();
+                }
+                // Already picked party mode this session: don't ask again.
+                if (result == SpeakerCheck.Result.Speaker && partyMode)
+                {
+                    UsePartyMode();
+                    return;
+                }
                 ui.Setup.ShowHeadphoneCheck(result);
             };
             songPlayer.StateChanged += OnPlaybackState;
@@ -233,7 +249,7 @@ namespace SpotlightAR.Core
             {
                 // Headphones plugged in or out: check again where the sound is going.
                 if (State == GameState.SongSetup) speakerCheck.Run();
-                else if (State == GameState.Singing)
+                else if (State == GameState.Singing && !partyMode)
                 {
                     // Like music apps: pause so the song never blasts from the speaker into the mic.
                     SetPaused(true);
@@ -290,6 +306,16 @@ namespace SpotlightAR.Core
             speakerCheck.Run();
         }
 
+        /// <summary>
+        /// No headphones: the song plays on the speaker and the mic hears it as loudly as the
+        /// singer, so the crowd reacts to everything and the show isn't scored.
+        /// </summary>
+        void UsePartyMode()
+        {
+            partyMode = true;
+            ui.Setup.UsePartyMode();
+        }
+
         void EnterPlacing()
         {
             SetArActive(true);
@@ -327,8 +353,11 @@ namespace SpotlightAR.Core
                 stagePlacer.Placed?.SetHype(1);
                 ui.Hud.SetScore(0);
                 ui.Hud.SetHype(1);
-                ShowNotice("Tip: wear headphones so the mic hears you, not the song.", HeadphonesTipSeconds);
-                if (PlayerPrefs.GetInt(NoteHintKey, 0) == 0)
+                partyEnergy.Reset();
+                ShowNotice(partyMode
+                    ? "Party mode: the crowd dances to everything. Plug in headphones to be scored."
+                    : "Tip: wear headphones so the mic hears you, not the song.", HeadphonesTipSeconds);
+                if (!partyMode && PlayerPrefs.GetInt(NoteHintKey, 0) == 0)
                 {
                     ui.Hud.ShowNoteHint();
                     PlayerPrefs.SetInt(NoteHintKey, 1);
@@ -340,7 +369,9 @@ namespace SpotlightAR.Core
             }
 
             bool lyricsOn = singSelected && singLyrics != null;
-            ui.Hud.SetSong(SelectedSong.title, lyricsOn ? "Sing mode" : "Karaoke video");
+            string mode = lyricsOn ? "Sing mode" : "Karaoke video";
+            ui.Hud.SetSong(SelectedSong.title, partyMode ? mode + " · party mode" : mode);
+            ui.Hud.SetScored(!partyMode);
             ui.Hud.SetLyricsVisible(lyricsOn);
             ui.Hud.SetVolume(SongVolume);
             ui.Hud.ShowPlayer(SelectedSong, songPlayer.ShowsVideo);
@@ -364,10 +395,15 @@ namespace SpotlightAR.Core
 
             stagePlacer.Placed?.PlayFinale();
             pendingResult = score.BuildResult(SelectedSong.videoId, SelectedSong.title, songPlayer.GetTime(), songPlayer.Duration);
-            profile.SaveResult(pendingResult);
-            history.Add(SelectedSong, pendingResult, CurrentStageName, singSelected && singLyrics != null);
+            pendingParty = partyMode;
+            if (!partyMode)
+            {
+                // Party mode shows are never saved: the mic couldn't tell the singer from the song.
+                profile.SaveResult(pendingResult);
+                history.Add(SelectedSong, pendingResult, CurrentStageName, singSelected && singLyrics != null);
+            }
             songPlayer.Stop();
-            ShowNotice(pendingResult.stars >= 4 ? "Encore! The crowd loved it." : "That's the end of the song!", ResultsDelay);
+            ShowNotice(!partyMode && pendingResult.stars >= 4 ? "Encore! The crowd loved it." : "That's the end of the song!", ResultsDelay);
             resultsAt = Time.time + ResultsDelay;
             SetState(GameState.Results);
         }
@@ -410,7 +446,9 @@ namespace SpotlightAR.Core
                 case GameState.SongSetup:
                     float level = mic.GetLoudness();
                     ui.Setup.PushMicLevel(level);
-                    if (!speakerCheck.Passed) break; // mic check waits for the headphone check
+                    // The mic check waits for the headphone check (never listening during its beeps);
+                    // party mode doesn't need it.
+                    if (!speakerCheck.Passed) break;
                     MicCheck.Result before = micCheck.Current;
                     if (micCheck.Update(level, Time.deltaTime) != before) ui.Setup.ShowMicResult(micCheck.Current);
                     break;
@@ -434,21 +472,29 @@ namespace SpotlightAR.Core
             {
                 resultsAt = -1f;
                 ui.Show(ui.Results);
-                ui.Results.ShowResult(pendingResult);
+                if (pendingParty) ui.Results.ShowParty(pendingResult);
+                else ui.Results.ShowResult(pendingResult);
             }
         }
 
         void UpdatePerformance()
         {
             bool live = State == GameState.Singing && songPlayer.IsPlaying;
-            float loudness = live ? mic.GetLoudness() : 0f;
+            float loudness = 0f;
+            if (live)
+            {
+                // Party mode follows the room getting louder, since the raw level stays maxed out on the speaker.
+                if (!partyMode) loudness = mic.GetLoudness();
+                else if (!mic.Muted) loudness = partyEnergy.Process(mic.Decibels, Time.deltaTime);
+            }
 
             Stage stage = stagePlacer.Placed;
             if (stage != null) stage.ReactTo(loudness);
 
             if (live)
             {
-                score.AddFrame(loudness, mic.GetPitch(), Time.deltaTime);
+                // In party mode the pitch would often be the song's, so no notes are shown.
+                score.AddFrame(loudness, partyMode ? 0f : mic.GetPitch(), Time.deltaTime);
                 ui.Hud.SetScore(score.Score);
                 ui.Hud.SetLiveNote(score.LiveNote);
             }

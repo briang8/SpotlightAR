@@ -37,6 +37,7 @@
                 <SpotlightAR.UI.VoiceMeter name="setup-meter" bar-count="34" class="mic-panel__meter" />
                 <ui:Label name="mic-tip" text="Say or sing anything to test your mic." class="mic-panel__tip" />
                 <ui:Button name="recheck-button" text="Check again" class="secondary-button mic-panel__recheck t-semibold" />
+                <ui:Button name="party-mode-button" text="No headphones? Party mode" class="text-button text-button--centered mic-panel__party t-medium" />
             </ui:VisualElement>
         </ui:ScrollView>
         <ui:VisualElement class="setup__actions">
