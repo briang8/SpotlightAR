@@ -39,6 +39,7 @@ namespace SpotlightAR.UI
         readonly Label noteName;
         readonly Label noteState;
         readonly VisualElement miniSlot;
+        readonly Label noteHint;
         readonly VisualElement playerHome;
         readonly VisualElement volumeRow;
         readonly Slider volumeSlider;
@@ -88,6 +89,8 @@ namespace SpotlightAR.UI
             noteName = Require<Label>("note-name");
             noteState = Require<Label>("note-state");
             miniSlot = Require<VisualElement>("mini-slot");
+            noteHint = Require<Label>("note-hint");
+            noteHint.style.display = DisplayStyle.None;
             playerHome = playerSlot.parent;
             volumeRow = Require<VisualElement>("volume-row");
             volumeSlider = Require<Slider>("volume-slider");
@@ -232,6 +235,15 @@ namespace SpotlightAR.UI
             float size = Mathf.Max(330f, 216f * unitsPerPixel);
             playerSlot.style.width = size;
             playerSlot.style.height = size;
+        }
+
+        /// <summary>First song only: a bubble under the note pill explaining it, gone after a few seconds.</summary>
+        public void ShowNoteHint()
+        {
+            noteHint.style.display = DisplayStyle.Flex;
+            noteHint.RemoveFromClassList("note-hint--gone");
+            noteHint.schedule.Execute(() => noteHint.AddToClassList("note-hint--gone")).ExecuteLater(6000);
+            noteHint.schedule.Execute(() => noteHint.style.display = DisplayStyle.None).ExecuteLater(6600);
         }
 
         /// <summary>

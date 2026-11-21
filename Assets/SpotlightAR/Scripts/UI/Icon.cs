@@ -27,7 +27,10 @@ namespace SpotlightAR.UI
         Spotlight,
         Rewind,
         Forward,
-        Volume
+        Volume,
+        Headphones,
+        Phone,
+        Help
     }
 
     /// <summary>
@@ -202,6 +205,25 @@ namespace SpotlightAR.UI
                     p.Arc(P(13, 12), 4.5f * unit, Angle.Degrees(-45f), Angle.Degrees(45f));
                     p.Stroke();
                     break;
+                case IconGlyph.Headphones:
+                    p.BeginPath();
+                    p.Arc(P(12, 13), 8f * unit, Angle.Degrees(180f), Angle.Degrees(360f));
+                    p.Stroke();
+                    StrokeRect(p, 3f, 13f, 4.5f, 7.5f, 1.8f);
+                    StrokeRect(p, 16.5f, 13f, 4.5f, 7.5f, 1.8f);
+                    break;
+                case IconGlyph.Phone:
+                    StrokeRect(p, 6.5f, 2.5f, 11f, 19f, 2.5f);
+                    Line(p, 10.5f, 18.5f, 13.5f, 18.5f);
+                    break;
+                case IconGlyph.Help:
+                    Circle(p, 12, 12, 9f);
+                    p.BeginPath();
+                    p.Arc(P(12, 9.5f), 2.8f * unit, Angle.Degrees(200f), Angle.Degrees(400f));
+                    p.LineTo(P(12, 14f));
+                    p.Stroke();
+                    Line(p, 12, 17.3f, 12, 17.4f);
+                    break;
             }
         }
 
@@ -261,6 +283,18 @@ namespace SpotlightAR.UI
         {
             p.BeginPath();
             p.Arc(P(x, y), radius * unit, Angle.Degrees(0f), Angle.Degrees(360f));
+            p.Stroke();
+        }
+
+        void StrokeRect(Painter2D p, float x, float y, float width, float height, float radius)
+        {
+            p.BeginPath();
+            p.MoveTo(P(x + radius, y));
+            p.ArcTo(P(x + width, y), P(x + width, y + height), radius * unit);
+            p.ArcTo(P(x + width, y + height), P(x, y + height), radius * unit);
+            p.ArcTo(P(x, y + height), P(x, y), radius * unit);
+            p.ArcTo(P(x, y), P(x + width, y), radius * unit);
+            p.ClosePath();
             p.Stroke();
         }
 

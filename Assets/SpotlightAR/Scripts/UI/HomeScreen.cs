@@ -51,6 +51,9 @@ namespace SpotlightAR.UI
         /// <summary>The moon/sun button: switch between light and dark mode.</summary>
         public event Action ThemeToggleRequested;
 
+        /// <summary>The help button: replay the tutorial cards.</summary>
+        public event Action HelpRequested;
+
         readonly Icon themeIcon;
         readonly VisualElement[] pages = new VisualElement[3];
         readonly Button[] navItems = new Button[3];
@@ -95,6 +98,7 @@ namespace SpotlightAR.UI
             Require<Button>("featured-sing").clicked += () => { if (FeaturedSong != null) SongChosen?.Invoke(FeaturedSong); };
             themeIcon = Require<Icon>("theme-icon");
             Require<Button>("theme-button").clicked += () => ThemeToggleRequested?.Invoke();
+            Require<Button>("help-button").clicked += () => HelpRequested?.Invoke();
 
             pages[0] = Require<VisualElement>("page-songs");
             pages[1] = Require<VisualElement>("page-library");

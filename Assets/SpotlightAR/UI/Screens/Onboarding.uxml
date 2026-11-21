@@ -1,0 +1,17 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="onboarding-root" class="screen-root screen-root--opaque onboarding">
+        <ui:VisualElement class="onboarding__top">
+            <ui:Label name="onboarding-step" text="1 of 4" class="onboarding__step t-semibold" />
+            <ui:Button name="onboarding-skip" text="Skip" class="text-button t-semibold" />
+        </ui:VisualElement>
+        <ui:VisualElement name="onboarding-card" class="onboarding__card">
+            <ui:VisualElement class="onboarding__badge">
+                <SpotlightAR.UI.Icon name="onboarding-icon" glyph="Spotlight" stroke="1.6" />
+            </ui:VisualElement>
+            <ui:Label name="onboarding-title" text="Your stage, anywhere" class="onboarding__title heading" />
+            <ui:Label name="onboarding-body" text="Body" class="onboarding__body" />
+        </ui:VisualElement>
+        <ui:VisualElement name="onboarding-dots" class="dots onboarding__dots" />
+        <ui:Button name="onboarding-next" text="Next" class="primary-button onboarding__next" />
+    </ui:VisualElement>
+</ui:UXML>

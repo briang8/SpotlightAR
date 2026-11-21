@@ -50,6 +50,13 @@
     align-items: center;
 }
 
+.hint-card__phone {
+    width: 96px;
+    height: 96px;
+    margin-bottom: 18px;
+    color: var(--c-accent);
+}
+
 .hint-card__title {
     font-size: 50px;
     -unity-text-align: middle-center;
@@ -471,4 +478,59 @@
     margin-top: 6px;
     font-size: 30px;
     opacity: 0.6;
+}
+
+/* First-song hint under the note pill. */
+.note-hint {
+    max-width: 440px;
+    margin-top: 12px;
+    padding: 14px 24px;
+    border-radius: 28px;
+    background-color: var(--c-text);
+    color: var(--c-bg);
+    font-size: 26px;
+    white-space: normal;
+    transition-property: opacity;
+    transition-duration: 0.5s;
+}
+
+.note-hint--gone {
+    opacity: 0;
+}
+
+.note-group {
+    align-items: flex-start;
+}
+
+/* "Fit to my space" under the size presets; turns coral when the stage is too big. */
+.sheet__fit {
+    flex-direction: row;
+    align-self: center;
+    align-items: center;
+    margin: 18px 0 26px 0;
+    padding: 12px 30px;
+    border-radius: 40px;
+}
+
+.sheet__fit .icon {
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
+    color: var(--c-accent);
+}
+
+.sheet__fit-label {
+    font-size: 32px;
+    color: var(--c-accent);
+}
+
+.sheet__fit--urgent,
+.sheet__fit--urgent:hover,
+.sheet__fit--urgent:focus {
+    background-color: var(--c-hi-tint);
+}
+
+.sheet__fit--urgent .icon,
+.sheet__fit--urgent .sheet__fit-label {
+    color: var(--c-hi);
 }

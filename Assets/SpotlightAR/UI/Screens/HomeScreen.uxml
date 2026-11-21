@@ -6,9 +6,14 @@
                     <ui:Label name="greeting" text="Good evening" class="home__greeting t-semibold" />
                     <ui:Label text="What are we singing?" class="home__title heading" />
                 </ui:VisualElement>
-                <ui:Button name="theme-button" class="round-button round-button--small home__theme" tooltip="Light or dark mode">
-                    <SpotlightAR.UI.Icon name="theme-icon" glyph="Moon" />
-                </ui:Button>
+                <ui:VisualElement class="home__actions">
+                    <ui:Button name="help-button" class="round-button round-button--small home__theme" tooltip="How it works">
+                        <SpotlightAR.UI.Icon glyph="Help" />
+                    </ui:Button>
+                    <ui:Button name="theme-button" class="round-button round-button--small home__theme" tooltip="Light or dark mode">
+                        <SpotlightAR.UI.Icon name="theme-icon" glyph="Moon" />
+                    </ui:Button>
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="search">
                 <SpotlightAR.UI.Icon glyph="Search" class="search__icon" />

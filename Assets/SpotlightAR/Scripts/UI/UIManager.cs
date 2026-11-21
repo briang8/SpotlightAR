@@ -27,6 +27,8 @@ namespace SpotlightAR.UI
         public PlacementScreen Placement { get; private set; }
         public SingingHud Hud { get; private set; }
         public ResultsScreen Results { get; private set; }
+        /// <summary>The first-launch tutorial. An overlay on top of the screens, so it isn't switched by <see cref="Show"/>.</summary>
+        public OnboardingOverlay Onboarding { get; private set; }
         public UIScreen Active { get; private set; }
 
         void OnEnable()
@@ -42,6 +44,10 @@ namespace SpotlightAR.UI
             Placement = Register(new PlacementScreen(root.Q("placement-screen")));
             Hud = Register(new SingingHud(root.Q("singing-hud")));
             Results = Register(new ResultsScreen(root.Q("results-screen")));
+            Onboarding = new OnboardingOverlay(root.Q("onboarding-screen"));
+            Onboarding.Hide(true);
+            Onboarding.Finished += () => PlayerPrefs.SetInt(OnboardingKey, 1);
+            Home.HelpRequested += Onboarding.Show;
 
             root.RegisterCallback<GeometryChangedEvent>(_ => ApplySafeArea(true));
 
@@ -50,6 +56,13 @@ namespace SpotlightAR.UI
         }
 
         const string DarkModeKey = "dark_mode";
+        const string OnboardingKey = "onboarding_done";
+
+        /// <summary>Shows the tutorial cards the first time the app is opened.</summary>
+        public void ShowOnboardingIfNew()
+        {
+            if (PlayerPrefs.GetInt(OnboardingKey, 0) == 0) Onboarding.Show();
+        }
 
         public bool DarkMode { get; private set; }
 
