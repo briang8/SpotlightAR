@@ -46,6 +46,8 @@ Shader "SpotlightAR/Stage Lit"
             float4 _StageGlowCenter; // xyz = world centre, w = radius
             // Set by LightEstimationApplier from the real room's brightness (0 = bright room).
             half _SpotlightRoomDarkness;
+            // Set by LightEstimationApplier from the real room's colour (alpha 0 = no estimate yet: no tint).
+            half4 _SpotlightRoomTint;
 
             struct Attributes
             {
@@ -80,7 +82,8 @@ Shader "SpotlightAR/Stage Lit"
 
                 Light mainLight = GetMainLight();
                 half wrap = saturate(dot(normal, mainLight.direction) * 0.5h + 0.5h);
-                half3 diffuse = _BaseColor.rgb * (mainLight.color * wrap * 0.75h + _Ambient * (1.0h - _SpotlightRoomDarkness));
+                half3 roomTint = lerp(half3(1.0h, 1.0h, 1.0h), _SpotlightRoomTint.rgb, _SpotlightRoomTint.a);
+                half3 diffuse = _BaseColor.rgb * (mainLight.color * wrap * 0.75h + _Ambient * (1.0h - _SpotlightRoomDarkness) * roomTint);
 
                 float radius = max(_StageGlowCenter.w, 1e-3);
                 half falloff = saturate(1.0 - distance(input.positionWS, _StageGlowCenter.xyz) / radius);

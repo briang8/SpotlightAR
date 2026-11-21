@@ -59,6 +59,7 @@ namespace SpotlightAR.Core
         const string StageNameKey = "stage_name";
         const string StageIndexKey = "stage_index";
         const string SignColorKey = "sign_color";
+        const string NoteHintKey = "note_hint_done";
 
         PerformanceHistory history;
         int signColor;
@@ -112,6 +113,7 @@ namespace SpotlightAR.Core
             ui.Home.ShowLoading();
             catalog.LoadAll();
             EnterHome();
+            ui.ShowOnboardingIfNew();
         }
 
         // ---------------- Wiring ----------------
@@ -184,6 +186,8 @@ namespace SpotlightAR.Core
             placement.SizeSelected += size => { stagePlacer.SetSize(size); placement.SetSize(size); };
             placement.PlaceRequested += StartSession;
             stagePlacer.SurfaceChanged += _ => RefreshPlacement();
+            placement.FitRequested += stagePlacer.FitToSurface;
+            stagePlacer.FitChanged += _ => RefreshPlacement();
             stagePlacer.StagePlaced += () =>
             {
                 stagePlacer.Placed?.SetStageName(stageName);
@@ -324,6 +328,11 @@ namespace SpotlightAR.Core
                 ui.Hud.SetScore(0);
                 ui.Hud.SetHype(1);
                 ShowNotice("Tip: wear headphones so the mic hears you, not the song.", HeadphonesTipSeconds);
+                if (PlayerPrefs.GetInt(NoteHintKey, 0) == 0)
+                {
+                    ui.Hud.ShowNoteHint();
+                    PlayerPrefs.SetInt(NoteHintKey, 1);
+                }
             }
             else
             {
@@ -468,6 +477,11 @@ namespace SpotlightAR.Core
             if (keyboard.endKey.wasPressedThisFrame && (State == GameState.Singing || State == GameState.Paused)) EndSession(completed: true);
 #endif
             if (!keyboard.escapeKey.wasPressedThisFrame) return;
+            if (ui.Onboarding.IsVisible)
+            {
+                ui.Onboarding.Close();
+                return;
+            }
 
             switch (State)
             {
@@ -628,7 +642,7 @@ namespace SpotlightAR.Core
             if (signColor > 0) stagePlacer.Placed?.SetSignColor(StagesPage.SignColors[signColor].color);
         }
 
-        void RefreshPlacement() => ui.Placement.SetSurface(stagePlacer.Surface, stagePlacer.Placed != null);
+        void RefreshPlacement() => ui.Placement.SetFits(stagePlacer.Fits, stagePlacer.Surface, stagePlacer.Placed != null);
 
         /// <summary>AR only runs while it is needed: no camera or tracking cost on the menus.</summary>
         void SetArActive(bool active)

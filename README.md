@@ -10,7 +10,8 @@ Built with Unity 6 and AR Foundation (ARCore) as a vertical slice for an AR/VR c
 
 - **Browse songs by genre** (Afrobeats, Pop, Rap, R&B, Gospel) from curated YouTube karaoke playlists, or **search all of YouTube** for a karaoke version of any song.
 - **Set up**: pick one of three stages and pass a quick headphones and mic check.
-- **Place the stage in AR**: scan a floor or table, tap to place, pinch to resize (tabletop, room or life size) and twist to turn.
+- **First launch**: four quick cards explain the app (replay them any time with the ? button on Home), plus short hints the first time you place a stage and sing.
+- **Place the stage in AR**: scan a floor or table (a faint grid shows what was found), tap to place, pinch to resize (tabletop, room or life size) and twist to turn. The stage drops in and its lights switch on one by one. If it's bigger than the floor found, the ring turns coral and **Fit to my space** sizes it to the room. Its lighting follows the room's brightness and colour, and on phones with ARCore depth, real objects in front of it hide it.
 - **Sing**: the karaoke video plays below the stage while your voice drives the lights, the crowd and a crowd-hype multiplier (x1 to x3). The crowd raises their hands when you get loud, cheers at milestones and holds up phone torches at x3.
 - **Sing mode**: for songs with synced lyrics, the original recording plays quietly (45% by default, adjustable) as a guide while the lyrics fill in line by line as the song plays.
 - **Light and dark mode**: light by default, switch with the moon button on the home screen.
@@ -47,6 +48,7 @@ Built with Unity 6 and AR Foundation (ARCore) as a vertical slice for an AR/VR c
 - **Needs an internet connection.** Songs stream from YouTube and can't be saved offline (YouTube's terms don't allow downloading or caching videos). Song lists, covers and lyrics are cached and the Library and Stages tabs work offline, but a song can't play without a connection. There's no legal way to bundle offline songs: free-licence songs don't come with timed lyrics.
 - **Headphones are required to be scored.** With the song playing through the phone's speaker, the mic hears the song and your voice mixed together. Cancelling the song out would need a copy of its audio, and the song plays inside YouTube's player, which the app can't read. So the app checks for headphones instead of letting the song leak into your score.
 - **It's for fun, not a singing judge.** The stars come from how much you sang and the crowd hype. The app doesn't judge the words, the melody, the key or the timing of your singing: a phone mic can't tell those reliably for any YouTube song, so it doesn't pretend to. The only pitch shown is the note you're holding, where the pitch detector is accurate.
+- **Occlusion depends on the phone.** Real objects only hide the stage on phones that support ARCore's Depth API. On others, the stage always draws on top, so use Fit to my space in small rooms.
 - **Sing mode needs synced lyrics**, which come from LRCLIB, a community database: many songs have them, not all. Without them, the song plays as a karaoke video.
 - **Sing mode can't remove only the vocals.** The song plays inside YouTube's player, which the app can't process (and YouTube's terms don't allow altering it), so Sing mode lowers the whole song's volume instead. The YouTube player also has to stay visible. Lyrics are timed to the album version, so the app picks the original audio upload whose length matches the lyrics.
 

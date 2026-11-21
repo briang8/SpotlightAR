@@ -10,6 +10,9 @@ namespace SpotlightAR.AR
     /// <summary>
     /// Finds floors and tables with AR plane detection, previews the spot with a reticle,
     /// and lets the player tap to place, pinch to resize and twist to turn the stage.
+    /// It keeps the stage within the floor that was actually found (with a "Fit" shortcut),
+    /// drops it in with a small bounce, and turns on depth occlusion where the phone supports
+    /// it, so real things in front of the stage hide it.
     /// Once confirmed, the stage is pinned with an ARAnchor and plane detection is
     /// switched off to save battery and CPU.
     /// </summary>
@@ -37,18 +40,35 @@ namespace SpotlightAR.AR
         [Tooltip("If the camera is less than this high above the surface (m), call it a table.")]
         [SerializeField] float tableHeightThreshold = 1f;
 
+        [Header("Realism")]
+        [Tooltip("Floor area a stage needs at scale 1, crowd included (metres).")]
+        [SerializeField] float stageFootprint = 1.7f;
+        [Tooltip("Hide the stage behind real objects using ARCore depth, on phones that support it.")]
+        [SerializeField] bool depthOcclusion = true;
+        [SerializeField] float dropHeight = 0.25f;
+        [SerializeField] float dropSeconds = 0.55f;
+
         static readonly List<ARRaycastHit> Hits = new List<ARRaycastHit>();
 
         ARAnchor anchor;
         ARPlane placedOnPlane;
         float targetScale;
         bool editing;
+        ARPlane surfacePlane;
+        Vector3 restPosition;
+        float dropTime = -1f;
 
         /// <summary>Raised when a surface becomes available or is lost.</summary>
         public event Action<SurfaceKind> SurfaceChanged;
 
         /// <summary>Raised whenever the stage is placed or moved.</summary>
         public event Action StagePlaced;
+
+        /// <summary>Raised when the stage starts or stops fitting on the surface that was found.</summary>
+        public event Action<bool> FitChanged;
+
+        /// <summary>False when the stage is bigger than the floor or table found so far.</summary>
+        public bool Fits { get; private set; } = true;
 
         public Stage Placed { get; private set; }
         public Stage StagePrefab => stagePrefab;
@@ -60,6 +80,7 @@ namespace SpotlightAR.AR
         {
             if (arCamera == null) arCamera = Camera.main;
             targetScale = ScaleFor(Size);
+            if (depthOcclusion) EnableOcclusion();
         }
 
         void OnEnable()
@@ -107,6 +128,7 @@ namespace SpotlightAR.AR
             editing = false;
             gestures.enabled = false;
             reticle.Hide();
+            FinishDrop();
             Placed.transform.localScale = Vector3.one * targetScale;
             SetPlaneDetection(false);
             CreateAnchor();
@@ -116,10 +138,12 @@ namespace SpotlightAR.AR
         /// <summary>Place (or move) the stage at a surface pose, facing the camera.</summary>
         public void PlaceStage(Pose pose)
         {
-            if (Placed == null)
+            bool arriving = Placed == null;
+            if (arriving)
             {
                 Placed = Instantiate(stagePrefab);
-                Placed.transform.localScale = Vector3.one * targetScale;
+                // Starts a little small and grows into place with the scale smoothing below.
+                Placed.transform.localScale = Vector3.one * (targetScale * 0.7f);
             }
 
             Vector3 toCamera = arCamera.transform.position - pose.position;
@@ -130,6 +154,10 @@ namespace SpotlightAR.AR
             Quaternion facing = front.sqrMagnitude > 1e-4f ? Quaternion.LookRotation(front.normalized, Vector3.up) : pose.rotation;
             Placed.transform.SetPositionAndRotation(pose.position, facing);
             reticle.Hide();
+            restPosition = pose.position;
+            dropTime = arriving ? 0f : -1f;
+            if (arriving) Placed.PlayEntrance();
+            UpdateFit();
             StagePlaced?.Invoke();
         }
 
@@ -143,7 +171,19 @@ namespace SpotlightAR.AR
         }
 
         /// <summary>Resize to an exact scale (clamped to the allowed range).</summary>
-        public void Resize(float scale) => targetScale = Mathf.Clamp(scale, scaleLimits.x, scaleLimits.y);
+        public void Resize(float scale)
+        {
+            targetScale = Mathf.Clamp(scale, scaleLimits.x, scaleLimits.y);
+            UpdateFit();
+        }
+
+        /// <summary>Size the stage to the floor or table found so far (a little smaller, to leave a margin).</summary>
+        public void FitToSurface()
+        {
+            ARPlane plane = placedOnPlane != null ? placedOnPlane : surfacePlane;
+            if (plane == null) return;
+            Resize(Mathf.Min(plane.size.x, plane.size.y) / stageFootprint * 0.9f);
+        }
 
         public void SetSize(StageSize size)
         {
@@ -160,6 +200,7 @@ namespace SpotlightAR.AR
                 Placed.transform.localScale = Vector3.one * next;
             }
 
+            UpdateDrop();
             if (editing) UpdateSurfacePreview();
         }
 
@@ -169,6 +210,7 @@ namespace SpotlightAR.AR
             if (Raycast(ScreenCentre, out ARRaycastHit hit))
             {
                 kind = arCamera.transform.position.y - hit.pose.position.y < tableHeightThreshold ? SurfaceKind.Table : SurfaceKind.Floor;
+                surfacePlane = hit.trackable as ARPlane;
                 if (Placed == null) reticle.Show(hit.pose, targetScale);
             }
             else if (Placed == null)
@@ -181,6 +223,7 @@ namespace SpotlightAR.AR
                 Surface = kind;
                 SurfaceChanged?.Invoke(kind);
             }
+            UpdateFit();
         }
 
         void OnTapped(Vector2 screenPosition)
@@ -212,6 +255,55 @@ namespace SpotlightAR.AR
             if (!raycaster.Raycast(screenPosition, Hits, TrackableType.PlaneWithinPolygon)) return false;
             hit = Hits[0]; // hits are sorted by distance
             return true;
+        }
+
+        /// <summary>The stage drops onto the surface and settles, instead of popping into existence.</summary>
+        void UpdateDrop()
+        {
+            if (dropTime < 0f || Placed == null) return;
+            dropTime += Time.deltaTime / dropSeconds;
+            if (dropTime >= 1f)
+            {
+                FinishDrop();
+                return;
+            }
+            float fall = Mathf.Pow(1f - dropTime, 3f);
+            Placed.transform.position = restPosition + Vector3.up * (dropHeight * targetScale * fall);
+        }
+
+        void FinishDrop()
+        {
+            if (dropTime < 0f || Placed == null) return;
+            dropTime = -1f;
+            Placed.transform.position = restPosition;
+        }
+
+        /// <summary>
+        /// Compares the stage's footprint with the plane under it. Planes grow as the phone sees
+        /// more of the floor, so there's some tolerance, and no plane yet means no warning.
+        /// </summary>
+        void UpdateFit()
+        {
+            ARPlane plane = placedOnPlane != null ? placedOnPlane : surfacePlane;
+            bool fits = plane == null || targetScale * stageFootprint <= Mathf.Min(plane.size.x, plane.size.y) * 1.25f;
+            reticle.SetTooBig(!fits);
+            if (fits == Fits) return;
+            Fits = fits;
+            FitChanged?.Invoke(fits);
+        }
+
+        /// <summary>
+        /// Turns on ARCore depth occlusion: real objects closer than the stage cover it. On phones
+        /// without depth support the request is simply ignored.
+        /// </summary>
+        void EnableOcclusion()
+        {
+            if (arCamera == null) return;
+            var occlusion = arCamera.GetComponent<AROcclusionManager>();
+            if (occlusion == null) occlusion = arCamera.gameObject.AddComponent<AROcclusionManager>();
+            occlusion.requestedEnvironmentDepthMode = EnvironmentDepthMode.Fastest;
+            occlusion.requestedOcclusionPreferenceMode = OcclusionPreferenceMode.PreferEnvironmentOcclusion;
+            occlusion.environmentDepthTemporalSmoothingRequested = true;
         }
 
         void CreateAnchor()

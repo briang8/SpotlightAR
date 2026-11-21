@@ -18,14 +18,20 @@ namespace SpotlightAR.UI
         readonly Label statusLabel;
         readonly Label hintTitle;
         readonly Label hintBody;
+        readonly Icon hintPhone;
+        bool scanning;
         readonly Label stageLabel;
         readonly Label sizeLabel;
         readonly Button placeButton;
+        readonly Button fitButton;
+        bool tooBig;
         readonly Dictionary<StageSize, Button> sizeButtons = new Dictionary<StageSize, Button>();
 
         public event Action CloseRequested;
         public event Action<StageSize> SizeSelected;
         public event Action PlaceRequested;
+        /// <summary>Size the stage to the floor or table that was found.</summary>
+        public event Action FitRequested;
 
         public PlacementScreen(VisualElement root) : base(root)
         {
@@ -33,12 +39,23 @@ namespace SpotlightAR.UI
             statusLabel = Require<Label>("status-label");
             hintTitle = Require<Label>("hint-title");
             hintBody = Require<Label>("hint-body");
+            hintPhone = Require<Icon>("hint-phone");
+            // While scanning, the phone icon sweeps side to side to show the motion to make.
+            hintPhone.schedule.Execute(() =>
+            {
+                if (!scanning) return;
+                float t = UnityEngine.Time.unscaledTime * 2.2f;
+                hintPhone.style.translate = new Translate(UnityEngine.Mathf.Sin(t) * 46f, 0f);
+                hintPhone.style.rotate = new Rotate(UnityEngine.Mathf.Sin(t) * 10f);
+            }).Every(16);
             stageLabel = Require<Label>("stage-label");
             sizeLabel = Require<Label>("size-label");
             placeButton = Require<Button>("place-button");
 
             Require<Button>("close-button").clicked += () => CloseRequested?.Invoke();
             placeButton.clicked += () => PlaceRequested?.Invoke();
+            fitButton = Require<Button>("fit-button");
+            fitButton.clicked += () => FitRequested?.Invoke();
 
             BindSize(StageSize.Tabletop, "size-tabletop");
             BindSize(StageSize.Room, "size-room");
@@ -71,7 +88,12 @@ namespace SpotlightAR.UI
                 _ => "Looking for a surface"
             };
 
-            if (stagePlaced)
+            if (tooBig && (found || stagePlaced))
+            {
+                hintTitle.text = "Not enough room here";
+                hintBody.text = "The stage is bigger than the space found. Tap \"Fit to my space\" or pick a smaller size.";
+            }
+            else if (stagePlaced)
             {
                 hintTitle.text = "Looking good!";
                 hintBody.text = "Tap somewhere else to move it. Pinch to resize, twist to turn.";
@@ -87,7 +109,17 @@ namespace SpotlightAR.UI
                 hintBody.text = "Move your phone slowly over a floor or table.";
             }
 
+            scanning = !found && !stagePlaced;
+            hintPhone.style.display = scanning ? DisplayStyle.Flex : DisplayStyle.None;
             placeButton.SetEnabled(found || stagePlaced);
+        }
+
+        /// <summary>Warn when the stage is too big for the surface found so far.</summary>
+        public void SetFits(bool fits, SurfaceKind surface, bool stagePlaced)
+        {
+            tooBig = !fits;
+            fitButton.EnableInClassList("sheet__fit--urgent", tooBig);
+            SetSurface(surface, stagePlaced);
         }
 
         static string Describe(StageSize size) => size switch

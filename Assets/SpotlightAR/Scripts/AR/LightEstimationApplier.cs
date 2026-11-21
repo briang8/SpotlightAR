@@ -6,7 +6,7 @@ namespace SpotlightAR.AR
     /// <summary>
     /// Matches the virtual stage to the real room. ARCore estimates the camera image's
     /// brightness and colour each frame; this sets the scene's main light from that and
-    /// darkens the stage's ambient fill in dim rooms, so the stage looks like it belongs
+    /// darkens and tints the stage's ambient fill to match the room, so the stage looks like it belongs
     /// in the space instead of floating on top of it. Uses the cheap ambient estimation
     /// mode rather than full environmental HDR.
     /// </summary>
@@ -14,12 +14,15 @@ namespace SpotlightAR.AR
     public sealed class LightEstimationApplier : MonoBehaviour
     {
         static readonly int RoomDarknessId = Shader.PropertyToID("_SpotlightRoomDarkness");
+        static readonly int RoomTintId = Shader.PropertyToID("_SpotlightRoomTint");
 
         [SerializeField] ARCameraManager cameraManager;
         [Tooltip("Main light intensity in a very dark and a very bright room.")]
         [SerializeField] Vector2 intensityRange = new Vector2(0.35f, 1.3f);
         [Tooltip("How much the stage's ambient fill can dim in a dark room (0-1).")]
         [SerializeField, Range(0f, 1f)] float maxDarkening = 0.6f;
+        [Tooltip("How strongly the room's colour tints the stage's ambient light (0-1).")]
+        [SerializeField, Range(0f, 1f)] float tintStrength = 0.6f;
         [SerializeField] float smoothing = 3f;
 
         Light mainLight;
@@ -41,6 +44,7 @@ namespace SpotlightAR.AR
         {
             if (cameraManager != null) cameraManager.frameReceived -= OnFrame;
             Shader.SetGlobalFloat(RoomDarknessId, 0f);
+            Shader.SetGlobalVector(RoomTintId, Vector4.zero);
         }
 
         void OnFrame(ARCameraFrameEventArgs args)
@@ -69,6 +73,8 @@ namespace SpotlightAR.AR
             mainLight.color = Color.Lerp(mainLight.color, targetColor, t);
             darkness = Mathf.Lerp(darkness, targetDarkness, t);
             Shader.SetGlobalFloat(RoomDarknessId, darkness);
+            Color tint = mainLight.color;
+            Shader.SetGlobalVector(RoomTintId, new Vector4(tint.r, tint.g, tint.b, tintStrength));
         }
     }
 }

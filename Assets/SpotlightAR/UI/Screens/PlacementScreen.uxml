@@ -10,6 +10,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="hint-card" class="hint-card">
+            <SpotlightAR.UI.Icon name="hint-phone" glyph="Phone" class="hint-card__phone" />
             <ui:Label name="hint-title" text="Scan the room" class="hint-card__title t-semibold" />
             <ui:Label name="hint-body" text="Move your phone slowly over a floor or table." class="hint-card__body" />
         </ui:VisualElement>
@@ -24,6 +25,10 @@
                 <ui:Button name="size-room" text="Room" class="segment t-medium" />
                 <ui:Button name="size-life" text="Life size" class="segment t-medium" />
             </ui:VisualElement>
+            <ui:Button name="fit-button" class="text-button sheet__fit t-semibold">
+                <SpotlightAR.UI.Icon glyph="Move" />
+                <ui:Label name="fit-label" text="Fit to my space" class="sheet__fit-label" />
+            </ui:Button>
             <ui:Button name="place-button" text="Place here and start" class="primary-button t-semibold" />
         </ui:VisualElement>
     </ui:VisualElement>

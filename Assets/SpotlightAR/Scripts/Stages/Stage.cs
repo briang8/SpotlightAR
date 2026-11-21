@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace SpotlightAR.Stages
@@ -96,6 +97,25 @@ namespace SpotlightAR.Stages
         public void SetStageName(string stageName)
         {
             if (sign != null) sign.SetText(stageName);
+        }
+
+        /// <summary>
+        /// Arrival: while the stage drops into place its lights are off, then they switch on one
+        /// by one with a flash and the crowd cheers, like a show starting.
+        /// </summary>
+        public void PlayEntrance() => StartCoroutine(Entrance());
+
+        IEnumerator Entrance()
+        {
+            foreach (StageLight stageLight in lights) stageLight.gameObject.SetActive(false);
+            yield return new WaitForSeconds(0.45f);
+            foreach (StageLight stageLight in lights)
+            {
+                stageLight.gameObject.SetActive(true);
+                stageLight.Flash();
+                yield return new WaitForSeconds(0.14f);
+            }
+            if (crowd != null) crowd.Cheer();
         }
 
         protected virtual void Start() { }

@@ -1,15 +1,15 @@
-// Visual for detected AR planes: a faint amber fill with a world-space dot grid that
-// fades with distance from the camera, so the player can see where the floor or
-// table has been found without hiding the real room.
+// Visual for detected AR planes: a barely-there fill with a fine world-space grid that
+// fades with distance from the camera, so the player can see where the floor or table
+// has been found without covering the real room (no glowing dots).
 Shader "SpotlightAR/Plane Dots"
 {
     Properties
     {
         _Color ("Color", Color) = (1, 0.71, 0.28, 1)
         _Fill ("Fill Opacity", Range(0, 1)) = 0.06
-        _DotOpacity ("Dot Opacity", Range(0, 1)) = 0.7
-        _Spacing ("Dot Spacing (m)", Float) = 0.08
-        _DotSize ("Dot Size", Range(0.01, 0.5)) = 0.12
+        _DotOpacity ("Line Opacity", Range(0, 1)) = 0.25
+        _Spacing ("Grid Spacing (m)", Float) = 0.15
+        _DotSize ("Line Width", Range(0.005, 0.2)) = 0.02
         _FadeDistance ("Fade Distance (m)", Float) = 2.5
     }
 
@@ -58,10 +58,11 @@ Shader "SpotlightAR/Plane Dots"
 
             half4 frag(Varyings input) : SV_Target
             {
-                float2 cell = frac(input.positionWS.xz / _Spacing) - 0.5;
-                float d = length(cell);
-                float aa = fwidth(d) * 1.5;
-                float dotMask = 1.0 - smoothstep(_DotSize - aa, _DotSize, d);
+                // Distance to the nearest grid line, in cell units; _DotSize is the line half-width.
+                float2 cell = abs(frac(input.positionWS.xz / _Spacing) - 0.5);
+                float edge = 0.5 - max(cell.x, cell.y);
+                float aa = fwidth(edge) * 1.5;
+                float dotMask = 1.0 - smoothstep(_DotSize - aa, _DotSize + aa, edge);
 
                 float cameraDistance = distance(input.positionWS, GetCameraPositionWS());
                 float fade = 1.0 - smoothstep(_FadeDistance * 0.5, _FadeDistance, cameraDistance);
