@@ -58,6 +58,24 @@ The genre playlists live in **`Assets/SpotlightAR/Data/GenrePlaylists.asset`**. 
 
 ---
 
+## Performance
+
+Profiled with the Unity Profiler on a Samsung Galaxy A32, singing on the Arena (the heaviest stage, 10 animated fans), with a 30 FPS cap.
+
+| | Before | After |
+|---|---|---|
+| Median frame | 67.3 ms (about 15 FPS) | 59.1 ms (about 17 FPS) |
+| CPU, typical frame | 67.2 ms | 59.1 ms |
+| GPU, typical frame | 47.7 ms | 37.5 ms |
+
+- **Fixes after profiling:** batched GPU skinning (the crowd was skinned on the CPU, 80 meshes a frame) and URP render scale 0.75.
+- **From the start:** SRP Batcher, shared materials per skin tone, IL2CPP for ARM64, HDR and MSAA off, no realtime shadows or extra lights, two-bone skinning, plane detection off once the stage is placed, and pitch detection on half-rate audio only while you're singing.
+- **No textures to optimise:** stages use flat colours and custom shaders, and icons are vector drawings, so there's nothing to mipmap or atlas.
+
+The GDD has the Profiler screenshots and the full breakdown.
+
+---
+
 ## Project structure
 
 ```
